@@ -19,6 +19,8 @@ services:
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
+    environment:
+      - HF_API_KEY=${HF_API_KEY}
     depends_on:
       - mongo
     restart: unless-stopped
@@ -35,4 +37,3 @@ services:
 # Define volumes for persistent data
 volumes:
   mongo-data:
-
