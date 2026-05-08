@@ -79,8 +79,8 @@ docker-compose down
 **Request body for create/update:**
 ```json
 {
-  "name": "Juan Dela Cruz",
-  "email": "juan@example.com",
+  "name": "Sarah Nicole Hular",
+  "email": "Sarah@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
