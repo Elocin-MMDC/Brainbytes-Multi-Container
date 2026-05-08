@@ -1,6 +1,6 @@
 # BrainBytes - AI-Powered Learning Platform
 
-BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB.
+BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB, integrated with the Hugging Face Inference API.
 
 ## Architecture
 
@@ -13,45 +13,96 @@ The application consists of three Docker containers:
 
 - Docker Desktop installed
 - Git installed
+- Hugging Face account with API token (free)
 
-## Running the Application
+## Setup & Running the Application
 
-1. Clone the repository:
+### 1. Clone the repository
 ```bash
 git clone https://github.com/Elocin-MMDC/Brainbytes-Multi-Container.git
 cd Brainbytes-Multi-Container
 ```
 
-2. Build and start the containers:
+### 2. Set up your Hugging Face token
+
+Create a `.env` file in the project root:
+```
+HUGGINGFACE_TOKEN=your_hugging_face_token_here
+```
+
+To get a free token:
+1. Sign up at https://huggingface.co
+2. Click your avatar → Access Tokens
+3. Create a fine-grained token with **Inference** permissions:
+   - Make calls to inference providers
+   - Make calls to Inference Endpoints
+4. Copy the token into your `.env` file
+
+### 3. Build and start the containers
 ```bash
 docker-compose up --build
 ```
 
-3. Open your browser:
+### 4. Open your browser
 - Chat Interface: http://localhost:8080
 - Profile Page: http://localhost:8080/profile
 - Dashboard: http://localhost:8080/dashboard
 - API: http://localhost:3000
 
-4. To stop:
+### 5. To stop the application
 ```bash
 docker-compose down
 ```
 
-## API Documentation
+## How to Use
 
-### Messages
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/messages` | Get all messages (optional `?subject=Math`) |
-| POST | `/api/messages` | Create a message |
+### Getting Started
+1. Go to **http://localhost:8080/profile**
+2. Create a profile with your name, email, and preferred subjects
+3. Click **"Use this profile"** to set it as active
+4. Go to **http://localhost:8080** to start chatting
+5. Your name and preferred subjects will appear in the chat!
+
+### Testing the AI Features
+
+**Question Type Detection (same topic, different responses):**
+```
+What is photosynthesis?       → definition
+Explain photosynthesis        → explanation
+Give me an example of photosynthesis → example
+```
+
+**Sentiment Analysis:**
+```
+I'm so frustrated!            → empathetic response
+I'm confused about gravity    → clearer explanation
+Thank you, this is great!     → positive acknowledgment
+```
+
+**Math Solver:**
+```
+What is 5 + 3?                → The answer is 8
+What is 1+1?                  → The answer to 1+1 is 2
+```
+
+**Other topics:**
+```
+What is algebra?
+Who is Jose Rizal?
+What is an atom?
+Define noun
+Explain verb
+What is the capital of the Philippines?
+```
+
+## API Documentation
 
 ### AI Chat
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/ai/chat` | Send message to AI; returns response with subject, question type, and sentiment |
+| POST | `/api/ai/chat` | Send message; returns AI response with subject, question type, and sentiment |
 
-**Request body:**
+**Request:**
 ```json
 { "message": "What is algebra?", "subject": "Math" }
 ```
@@ -76,11 +127,11 @@ docker-compose down
 | PUT | `/api/users/:id` | Update a user profile |
 | DELETE | `/api/users/:id` | Delete a user profile |
 
-**Request body for create/update:**
+**Request body:**
 ```json
 {
-  "name": "Sarah Nicole Hular",
-  "email": "Sarah@example.com",
+  "name": "Juan Dela Cruz",
+  "email": "juan@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
@@ -92,7 +143,7 @@ docker-compose down
 | GET | `/api/materials` | Get all materials (optional `?subject=Math`) |
 | GET | `/api/materials/:id` | Get a single material by ID |
 
-**Request body for create:**
+**Request body:**
 ```json
 {
   "subject": "Math",
@@ -101,19 +152,20 @@ docker-compose down
 }
 ```
 
-### Dashboard
+### Messages & Dashboard
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/messages` | Get chat history (optional `?subject=Math`) |
 | GET | `/api/dashboard/recent` | Get recent activity, total messages, and subject counts |
 
 ## Database Schema Design
 
 ### Message Collection
-Stores chat history between users and the AI tutor.
+Stores all chat conversations with AI metadata.
 ```javascript
 {
   text: String,           // user's question
-  response: String,       // AI's response
+  response: String,       // AI's answer
   subject: String,        // detected/selected subject
   questionType: String,   // definition | explanation | example | general
   sentiment: String,      // frustrated | confused | positive | neutral
@@ -125,99 +177,92 @@ Stores chat history between users and the AI tutor.
 Stores user account information and learning preferences.
 ```javascript
 {
-  name: String,                    // required
-  email: String,                   // required, unique
-  preferredSubjects: [String],     // array of subject names
+  name: String,                  // required
+  email: String,                 // required, unique
+  preferredSubjects: [String],   // array of preferred subjects
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
 ### LearningMaterial Collection
-Stores reference learning content organized by subject and topic.
+Stores learning content organized by subject and topic.
 ```javascript
 {
-  subject: String,    // required (Math, Science, etc.)
-  topic: String,      // required (specific topic name)
-  content: String,    // required (the learning content)
+  subject: String,    // required
+  topic: String,      // required
+  content: String,    // required
   createdAt: Date
 }
 ```
 
 ## AI Implementation
 
-### Approach: Simulated AI vs External API
+### Hybrid Approach (Hugging Face API + Intelligent Fallback)
 
-As suggested by the activity instructions, this project uses a **simulated AI** approach with intelligent keyword-based responses. This was chosen for the following reasons:
+The AI uses a **hybrid approach** as recommended by the activity:
+1. **Primary**: Calls Hugging Face Inference API (`facebook/bart-large-cnn`)
+2. **Fallback**: Uses local intelligent responses when API is unavailable or rate-limited
 
-#### Hugging Face Integration Attempt
+The AI logic is in `aiService.js` which exports:
+- `initializeAI()` - validates environment and token
+- `generateResponse(question)` - main hybrid logic
+- `detectQuestionType(question)` - detects definition/explanation/example/general
+- `detectSentiment(question)` - detects frustrated/confused/positive/neutral
 
-We initially attempted to integrate the **Hugging Face Inference API** as recommended in the activity. The implementation included:
-- API key management via `.env` file
-- HTTP requests to Hugging Face endpoints using `node-fetch`
-- Response parsing for various model formats
+### Note on Node.js Compatibility
+The backend uses Node.js 14. `AbortController` is not natively available in Node.js 14, so the API timeout handling was adjusted for compatibility. The fallback system ensures the app always responds.
 
-**Models tested:**
-- `facebook/blenderbot-400M-distill`
-- `mistralai/Mistral-7B-Instruct-v0.3`
-- `HuggingFaceH4/zephyr-7b-beta`
-- `google/flan-t5-base`
-
-**Issues encountered:**
-- "Model not supported by provider hf-inference" errors
-- API endpoint URLs deprecated (404 Cannot POST errors)
-- Free tier limitations on inference providers
-
-**Decision:** Per the activity guidance ("you can simulate an AI response just to see how it runs"), we pivoted to a custom simulated AI that demonstrates all required AI capabilities while being reliable, fast, and cost-free.
-
-### Simulated AI Features
+### AI Features
 
 #### 1. Expanded Knowledge Base
-The AI has training data across multiple subjects:
+Each topic has three response variants (definition, explanation, example):
 - **Math**: algebra, geometry
-- **Science**: photosynthesis, gravity, atoms
-- **History**: Jose Rizal
+- **Science**: photosynthesis, gravity, atoms, evaporation, precipitation
+- **History**: Jose Rizal, Philippines
 - **English**: nouns, verbs
 
-Each topic includes definition, explanation, and example responses.
-
 #### 2. Question Type Detection
-The AI detects three types of questions and responds accordingly:
-- **Definition**: Triggered by phrases like "what is", "define", "meaning of"
-- **Explanation**: Triggered by "how", "why", "explain", "describe"
-- **Example**: Triggered by "example", "show me", "give me a sample"
+- **Definition**: "what is", "define", "meaning of"
+- **Explanation**: "how", "why", "explain", "describe"
+- **Example**: "example", "show me", "give me a sample"
+- **General**: default
 
 #### 3. Sentiment Analysis
-The AI detects user emotional state and adapts its response:
-- **Frustrated**: Detects words like "frustrated", "hate", "stupid" - responds with empathy
-- **Confused**: Detects "confused", "don't understand", "stuck" - offers clearer explanation
-- **Positive**: Detects "thanks", "great", "love" - acknowledges positivity
-- **Neutral**: Default response style
+- **Frustrated** ("frustrated", "frustrating", "hate", "stupid") → empathetic prefix
+- **Confused** ("confused", "don't understand", "lost", "stuck") → clearer explanation prefix
+- **Positive** ("thanks", "great", "love", "helpful") → positive acknowledgment
+- **Neutral** → default response
 
-#### 4. Subject Classification
-Messages are automatically classified into subjects (Math, Science, History, English, Filipino, General) based on keyword detection. This enables filtering and analytics.
+#### 4. Subject Auto-Classification
+Auto-classifies messages into Math, Science, History, English, Filipino, or General for filtering and analytics.
 
 #### 5. Math Expression Solver
-Can evaluate basic math expressions like "what is 5 + 3" and return numeric answers.
+Evaluates expressions like "What is 5 + 3?" directly.
 
 ## Frontend Features
 
 ### Chat Page (/)
-- Real-time AI conversation
-- Subject filter dropdown
-- Displays detected subject, question type, and sentiment for each AI response
+- AI conversation with typing indicator
+- **Subject filter dropdown** (All, Math, Science, History, English, Filipino, General)
+- **Quick subject buttons** based on active user's preferred subjects
+- **Active user banner** showing name and preferred subjects
+- Each AI response shows Subject, Question Type, and Sentiment labels
+- Personalized welcome message and username in chat
 
 ### Profile Page (/profile)
-- Create user profiles with name, email, and preferred subjects
-- View all existing profiles
+- Create profiles with name, email, and preferred subjects
+- **"Use this profile"** button to set active user
+- Active profile highlighted with green border and checkmark
 - Edit and delete profiles
-- Multi-select subject preferences
+- Logout button to switch users
+- Active profile preferences sync to Chat page
 
 ### Dashboard Page (/dashboard)
 - Total conversation count
-- Subject-wise breakdown
+- Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
-- Question type and sentiment indicators
+- Question Type and Sentiment per conversation
 
 ## Project Structure
 
@@ -226,19 +271,20 @@ brainbytes-multi-container/
 ├── backend/
 │   ├── Dockerfile
 │   ├── package.json
-│   └── server.js
+│   ├── server.js          # Express server with all API endpoints
+│   └── aiService.js       # AI service (Hugging Face + fallback)
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
 │   └── pages/
-│       ├── index.js          # Chat page
-│       ├── profile.js        # Profile management
-│       └── dashboard.js      # Activity dashboard
+│       ├── index.js       # Chat page with subject filter + active user
+│       ├── profile.js     # Profile management with active user selection
+│       └── dashboard.js   # Learning activity dashboard
 ├── docker-compose.yml
+├── .env                   # Hugging Face token (gitignored)
 ├── .gitignore
 └── README.md
 ```
-
 
 
 ## Team Members
@@ -246,7 +292,7 @@ brainbytes-multi-container/
 - Christine Joy Cortes
 - Sarah Nicole Hular
 - Michelle Joi Quesada
-- Eldan Eunice Sinsuan 
+- Eldan Eunice Sinsuan
 
 ## License
 This project is for educational purposes as part of the DevOps course.
