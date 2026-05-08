@@ -37,20 +37,13 @@ export default function Profile() {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.put('http://localhost:3000/api/users/' + editingId, {
-          name, email, preferredSubjects
-        });
+        await axios.put('http://localhost:3000/api/users/' + editingId, { name, email, preferredSubjects });
         setMessage('Profile updated successfully!');
       } else {
-        await axios.post('http://localhost:3000/api/users', {
-          name, email, preferredSubjects
-        });
+        await axios.post('http://localhost:3000/api/users', { name, email, preferredSubjects });
         setMessage('Profile created successfully!');
       }
-      setName('');
-      setEmail('');
-      setPreferredSubjects([]);
-      setEditingId(null);
+      setName(''); setEmail(''); setPreferredSubjects([]); setEditingId(null);
       fetchUsers();
     } catch (err) {
       setMessage('Error: ' + (err.response?.data?.error || err.message));
@@ -58,11 +51,9 @@ export default function Profile() {
   };
 
   const handleEdit = (user) => {
-    setName(user.name);
-    setEmail(user.email);
+    setName(user.name); setEmail(user.email);
     setPreferredSubjects(user.preferredSubjects || []);
-    setEditingId(user._id);
-    setMessage('');
+    setEditingId(user._id); setMessage('');
   };
 
   const handleDelete = async (id) => {
@@ -77,29 +68,24 @@ export default function Profile() {
   };
 
   const handleCancel = () => {
-    setName('');
-    setEmail('');
-    setPreferredSubjects([]);
-    setEditingId(null);
-    setMessage('');
+    setName(''); setEmail(''); setPreferredSubjects([]); setEditingId(null); setMessage('');
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <nav style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '2px solid #0070f3', paddingBottom: '10px' }}>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Nunito, sans-serif' }}>
+      <nav style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '2px solid #2196f3', paddingBottom: '10px' }}>
         <Link href="/"><a style={{ color: '#666', textDecoration: 'none' }}>Chat</a></Link>
-        <Link href="/profile"><a style={{ color: '#0070f3', textDecoration: 'none', fontWeight: 'bold' }}>Profile</a></Link>
+        <Link href="/profile"><a style={{ color: '#2196f3', textDecoration: 'none', fontWeight: 'bold' }}>Profile</a></Link>
         <Link href="/dashboard"><a style={{ color: '#666', textDecoration: 'none' }}>Dashboard</a></Link>
       </nav>
 
-      <h1 style={{ color: '#0070f3' }}>User Profile</h1>
+      <h1 style={{ color: '#333' }}>User Profile</h1>
 
       {message && (
         <div style={{
           padding: '10px',
           backgroundColor: message.includes('Error') ? '#fee' : '#efe',
-          borderRadius: '5px',
-          marginBottom: '15px',
+          borderRadius: '5px', marginBottom: '15px',
           color: message.includes('Error') ? '#c00' : '#060'
         }}>
           {message}
@@ -107,33 +93,22 @@ export default function Profile() {
       )}
 
       <form onSubmit={handleSubmit} style={{
-        backgroundColor: '#f9f9f9',
-        padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '30px'
+        backgroundColor: '#f9f9f9', padding: '20px',
+        borderRadius: '12px', marginBottom: '30px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <h3>{editingId ? 'Edit Profile' : 'Create New Profile'}</h3>
 
         <div style={{ marginBottom: '12px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Name:</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-          />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required
+            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }} />
         </div>
 
         <div style={{ marginBottom: '12px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-          />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }} />
         </div>
 
         <div style={{ marginBottom: '15px' }}>
@@ -142,18 +117,12 @@ export default function Profile() {
             {subjectOptions.map(sub => (
               <label key={sub} style={{
                 padding: '6px 12px',
-                backgroundColor: preferredSubjects.includes(sub) ? '#0070f3' : '#fff',
+                backgroundColor: preferredSubjects.includes(sub) ? '#2196f3' : '#fff',
                 color: preferredSubjects.includes(sub) ? 'white' : '#333',
-                border: '1px solid #ddd',
-                borderRadius: '20px',
-                cursor: 'pointer'
+                border: '1px solid #ddd', borderRadius: '20px', cursor: 'pointer'
               }}>
-                <input
-                  type="checkbox"
-                  checked={preferredSubjects.includes(sub)}
-                  onChange={() => toggleSubject(sub)}
-                  style={{ display: 'none' }}
-                />
+                <input type="checkbox" checked={preferredSubjects.includes(sub)}
+                  onChange={() => toggleSubject(sub)} style={{ display: 'none' }} />
                 {sub}
               </label>
             ))}
@@ -161,28 +130,17 @@ export default function Profile() {
         </div>
 
         <button type="submit" style={{
-          padding: '10px 24px',
-          backgroundColor: '#0070f3',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-          marginRight: '10px'
+          padding: '10px 24px', backgroundColor: '#2196f3', color: 'white',
+          border: 'none', borderRadius: '5px', cursor: 'pointer',
+          fontWeight: 'bold', marginRight: '10px'
         }}>
           {editingId ? 'Update' : 'Create'}
         </button>
         {editingId && (
           <button type="button" onClick={handleCancel} style={{
-            padding: '10px 24px',
-            backgroundColor: '#999',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}>
-            Cancel
-          </button>
+            padding: '10px 24px', backgroundColor: '#999', color: 'white',
+            border: 'none', borderRadius: '5px', cursor: 'pointer'
+          }}>Cancel</button>
         )}
       </form>
 
@@ -193,11 +151,8 @@ export default function Profile() {
         <div>
           {users.map(user => (
             <div key={user._id} style={{
-              padding: '15px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              marginBottom: '10px',
-              backgroundColor: '#fff'
+              padding: '15px', border: '1px solid #ddd',
+              borderRadius: '8px', marginBottom: '10px', backgroundColor: '#fff'
             }}>
               <div style={{ fontWeight: 'bold', fontSize: '18px' }}>{user.name}</div>
               <div style={{ color: '#666', fontSize: '14px' }}>{user.email}</div>
@@ -206,21 +161,12 @@ export default function Profile() {
               </div>
               <div style={{ marginTop: '10px' }}>
                 <button onClick={() => handleEdit(user)} style={{
-                  padding: '6px 14px',
-                  backgroundColor: '#0070f3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  marginRight: '8px'
+                  padding: '6px 14px', backgroundColor: '#2196f3', color: 'white',
+                  border: 'none', borderRadius: '5px', cursor: 'pointer', marginRight: '8px'
                 }}>Edit</button>
                 <button onClick={() => handleDelete(user._id)} style={{
-                  padding: '6px 14px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer'
+                  padding: '6px 14px', backgroundColor: '#dc3545', color: 'white',
+                  border: 'none', borderRadius: '5px', cursor: 'pointer'
                 }}>Delete</button>
               </div>
             </div>
