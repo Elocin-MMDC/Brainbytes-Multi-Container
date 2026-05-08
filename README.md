@@ -1,4 +1,4 @@
-# BrainBytes - AI-Powered Learning Platform
+# BrainBytes
 
 BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB, integrated with the Hugging Face Inference API.
 
@@ -130,8 +130,8 @@ What is the capital of the Philippines?
 **Request body:**
 ```json
 {
-  "name": "Juan Dela Cruz",
-  "email": "juan@example.com",
+  "name": "Sarah Nicole Hular",
+  "email": "sarah@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
