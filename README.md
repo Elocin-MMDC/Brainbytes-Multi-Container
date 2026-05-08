@@ -239,13 +239,7 @@ brainbytes-multi-container/
 └── README.md
 ```
 
-## Future Enhancements
 
-- Re-attempt Hugging Face integration with newer/supported models
-- Add user authentication (login/signup)
-- Implement persistent chat history per user
-- Add more advanced sentiment analysis using NLP libraries
-- Expand knowledge base with more topics and subjects
 
 ## Team Members
 - Mara Julienne Rose Cervantes
