@@ -79,8 +79,8 @@ docker-compose down
 **Request body for create/update:**
 ```json
 {
-  "name": "Sarah Nicole Hular",
-  "email": "sarah@example.com",
+  "name": "Juan Dela Cruz",
+  "email": "juan@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
@@ -144,10 +144,36 @@ Stores reference learning content organized by subject and topic.
 }
 ```
 
-## AI Enhancements
+## AI Implementation
 
-### 1. Expanded Knowledge Base
-The AI now has training data across multiple subjects:
+### Approach: Simulated AI vs External API
+
+As suggested by the activity instructions, this project uses a **simulated AI** approach with intelligent keyword-based responses. This was chosen for the following reasons:
+
+#### Hugging Face Integration Attempt
+
+We initially attempted to integrate the **Hugging Face Inference API** as recommended in the activity. The implementation included:
+- API key management via `.env` file
+- HTTP requests to Hugging Face endpoints using `node-fetch`
+- Response parsing for various model formats
+
+**Models tested:**
+- `facebook/blenderbot-400M-distill`
+- `mistralai/Mistral-7B-Instruct-v0.3`
+- `HuggingFaceH4/zephyr-7b-beta`
+- `google/flan-t5-base`
+
+**Issues encountered:**
+- "Model not supported by provider hf-inference" errors
+- API endpoint URLs deprecated (404 Cannot POST errors)
+- Free tier limitations on inference providers
+
+**Decision:** Per the activity guidance ("you can simulate an AI response just to see how it runs"), we pivoted to a custom simulated AI that demonstrates all required AI capabilities while being reliable, fast, and cost-free.
+
+### Simulated AI Features
+
+#### 1. Expanded Knowledge Base
+The AI has training data across multiple subjects:
 - **Math**: algebra, geometry
 - **Science**: photosynthesis, gravity, atoms
 - **History**: Jose Rizal
@@ -155,23 +181,23 @@ The AI now has training data across multiple subjects:
 
 Each topic includes definition, explanation, and example responses.
 
-### 2. Question Type Detection
+#### 2. Question Type Detection
 The AI detects three types of questions and responds accordingly:
 - **Definition**: Triggered by phrases like "what is", "define", "meaning of"
 - **Explanation**: Triggered by "how", "why", "explain", "describe"
 - **Example**: Triggered by "example", "show me", "give me a sample"
 
-### 3. Sentiment Analysis
+#### 3. Sentiment Analysis
 The AI detects user emotional state and adapts its response:
 - **Frustrated**: Detects words like "frustrated", "hate", "stupid" - responds with empathy
 - **Confused**: Detects "confused", "don't understand", "stuck" - offers clearer explanation
 - **Positive**: Detects "thanks", "great", "love" - acknowledges positivity
 - **Neutral**: Default response style
 
-### 4. Subject Classification
+#### 4. Subject Classification
 Messages are automatically classified into subjects (Math, Science, History, English, Filipino, General) based on keyword detection. This enables filtering and analytics.
 
-### 5. Math Expression Solver
+#### 5. Math Expression Solver
 Can evaluate basic math expressions like "what is 5 + 3" and return numeric answers.
 
 ## Frontend Features
@@ -213,12 +239,20 @@ brainbytes-multi-container/
 └── README.md
 ```
 
+## Future Enhancements
+
+- Re-attempt Hugging Face integration with newer/supported models
+- Add user authentication (login/signup)
+- Implement persistent chat history per user
+- Add more advanced sentiment analysis using NLP libraries
+- Expand knowledge base with more topics and subjects
+
 ## Team Members
 - Mara Julienne Rose Cervantes
 - Christine Joy Cortes
 - Sarah Nicole Hular
-- Michelle Joi Quesada 
-- Eldan Eunice Sinsuan
+- Michelle Joi Quesada
+- Eldan Eunice Sinsuan 
 
 ## License
 This project is for educational purposes as part of the DevOps course.
