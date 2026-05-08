@@ -233,7 +233,7 @@ export default function Profile() {
                   <button onClick={() => handleSetActive(user)} style={{
                     padding: '6px 14px', backgroundColor: '#4caf50', color: 'white',
                     border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold'
-                  }}>✅ Use this profile</button>
+                  }}>Use this profile</button>
                 ) : (
                   <span style={{ padding: '6px 14px', backgroundColor: '#e8f5e9', color: '#2e7d32',
                     borderRadius: '5px', fontSize: '13px', fontWeight: 'bold' }}>Currently Active</span>
