@@ -1,6 +1,6 @@
 # BrainBytes - AI-Powered Learning Platform
 
-BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB.
+BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB, integrated with the Hugging Face Inference API.
 
 ## Architecture
 
@@ -13,45 +13,81 @@ The application consists of three Docker containers:
 
 - Docker Desktop installed
 - Git installed
+- Hugging Face account with API token (free)
 
-## Running the Application
+## Setup & Running the Application
 
-1. Clone the repository:
+### 1. Clone the repository
 ```bash
 git clone https://github.com/Elocin-MMDC/Brainbytes-Multi-Container.git
 cd Brainbytes-Multi-Container
 ```
 
-2. Build and start the containers:
+### 2. Set up your Hugging Face token
+
+Create a `.env` file in the project root:
+```
+HUGGINGFACE_TOKEN=your_hugging_face_token_here
+```
+
+To get a free token:
+1. Sign up at https://huggingface.co
+2. Click your avatar → Access Tokens
+3. Create a fine-grained token with **Inference** permissions:
+   - Make calls to inference providers
+   - Make calls to Inference Endpoints
+4. Copy the token into your `.env` file
+
+### 3. Build and start the containers
 ```bash
 docker-compose up --build
 ```
 
-3. Open your browser:
+### 4. Open your browser
 - Chat Interface: http://localhost:8080
 - Profile Page: http://localhost:8080/profile
 - Dashboard: http://localhost:8080/dashboard
 - API: http://localhost:3000
 
-4. To stop:
+### 5. To stop the application
 ```bash
 docker-compose down
 ```
 
-## API Documentation
+## Testing the Application
 
-### Messages
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/messages` | Get all messages (optional `?subject=Math`) |
-| POST | `/api/messages` | Create a message |
+### Chat Page
+Try asking these questions to test different AI features:
+
+**Question Type Detection:**
+- `What is algebra?` → definition response
+- `Explain photosynthesis` → explanation response
+- `Give me an example of a noun` → example response
+
+**Sentiment Analysis:**
+- `I'm so frustrated!` → empathetic response
+- `I'm confused about gravity` → patient, clearer response
+- `Thank you, this is great!` → positive acknowledgment
+
+**Math Solver:**
+- `What is 5 + 3?` → returns "The answer is 8"
+- `What is 1+1?` → returns "The answer to 1+1 is 2"
+
+**Subject Detection:**
+- Questions about algebra, geometry → detected as Math
+- Questions about photosynthesis, gravity, atoms → detected as Science
+- Questions about Rizal, Philippines → detected as History
+- Questions about nouns, verbs → detected as English
+- Questions in Filipino/Tagalog → detected as Filipino
+
+## API Documentation
 
 ### AI Chat
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/ai/chat` | Send message to AI; returns response with subject, question type, and sentiment |
+| POST | `/api/ai/chat` | Send message; returns AI response with subject, question type, and sentiment |
 
-**Request body:**
+**Request:**
 ```json
 { "message": "What is algebra?", "subject": "Math" }
 ```
@@ -76,11 +112,11 @@ docker-compose down
 | PUT | `/api/users/:id` | Update a user profile |
 | DELETE | `/api/users/:id` | Delete a user profile |
 
-**Request body for create/update:**
+**Request body:**
 ```json
 {
-  "name": "Sarah Nicole Hular",
-  "email": "Sarah@example.com",
+  "name": "Juan Dela Cruz",
+  "email": "juan@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
@@ -92,7 +128,7 @@ docker-compose down
 | GET | `/api/materials` | Get all materials (optional `?subject=Math`) |
 | GET | `/api/materials/:id` | Get a single material by ID |
 
-**Request body for create:**
+**Request body:**
 ```json
 {
   "subject": "Math",
@@ -101,20 +137,21 @@ docker-compose down
 }
 ```
 
-### Dashboard
+### Messages & Dashboard
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/messages` | Get chat history (optional `?subject=Math`) |
 | GET | `/api/dashboard/recent` | Get recent activity, total messages, and subject counts |
 
 ## Database Schema Design
 
 ### Message Collection
-Stores chat history between users and the AI tutor.
+Stores all chat conversations with AI metadata.
 ```javascript
 {
   text: String,           // user's question
-  response: String,       // AI's response
-  subject: String,        // detected/selected subject
+  response: String,       // AI's answer
+  subject: String,        // detected/selected subject (Math, Science, History, English, Filipino, General)
   questionType: String,   // definition | explanation | example | general
   sentiment: String,      // frustrated | confused | positive | neutral
   createdAt: Date
@@ -125,19 +162,19 @@ Stores chat history between users and the AI tutor.
 Stores user account information and learning preferences.
 ```javascript
 {
-  name: String,                    // required
-  email: String,                   // required, unique
-  preferredSubjects: [String],     // array of subject names
+  name: String,                  // required
+  email: String,                 // required, unique
+  preferredSubjects: [String],   // array of preferred subjects
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
 ### LearningMaterial Collection
-Stores reference learning content organized by subject and topic.
+Stores learning content organized by subject and topic.
 ```javascript
 {
-  subject: String,    // required (Math, Science, etc.)
+  subject: String,    // required (Math, Science, History, English, Filipino)
   topic: String,      // required (specific topic name)
   content: String,    // required (the learning content)
   createdAt: Date
@@ -146,78 +183,68 @@ Stores reference learning content organized by subject and topic.
 
 ## AI Implementation
 
-### Approach: Simulated AI vs External API
+### Hybrid Approach (Hugging Face API + Intelligent Fallback)
 
-As suggested by the activity instructions, this project uses a **simulated AI** approach with intelligent keyword-based responses. This was chosen for the following reasons:
+The AI uses a **hybrid approach** as recommended by the activity:
 
-#### Hugging Face Integration Attempt
+1. **Primary**: Attempts to call the Hugging Face Inference API (`facebook/bart-large-cnn`) for AI-generated responses
+2. **Fallback**: When the API is unavailable, times out, or rate-limited, the system uses a local intelligent response system
 
-We initially attempted to integrate the **Hugging Face Inference API** as recommended in the activity. The implementation included:
-- API key management via `.env` file
-- HTTP requests to Hugging Face endpoints using `node-fetch`
-- Response parsing for various model formats
+The AI logic is separated into `aiService.js` which exports:
+- `initializeAI()` - validates environment and token
+- `generateResponse(question)` - main hybrid logic
+- `detectQuestionType(question)` - detects definition/explanation/example/general
+- `detectSentiment(question)` - detects frustrated/confused/positive/neutral
 
-**Models tested:**
-- `facebook/blenderbot-400M-distill`
-- `mistralai/Mistral-7B-Instruct-v0.3`
-- `HuggingFaceH4/zephyr-7b-beta`
-- `google/flan-t5-base`
+### Note on Node.js Compatibility
+The backend uses Node.js 14 (alpine). `AbortController` is not natively available in Node.js 14, so the API timeout is handled without it. The fallback system ensures the app always responds even when the API is unavailable.
 
-**Issues encountered:**
-- "Model not supported by provider hf-inference" errors
-- API endpoint URLs deprecated (404 Cannot POST errors)
-- Free tier limitations on inference providers
-
-**Decision:** Per the activity guidance ("you can simulate an AI response just to see how it runs"), we pivoted to a custom simulated AI that demonstrates all required AI capabilities while being reliable, fast, and cost-free.
-
-### Simulated AI Features
+### AI Features
 
 #### 1. Expanded Knowledge Base
-The AI has training data across multiple subjects:
+Training data covers multiple subjects, each with three response types:
 - **Math**: algebra, geometry
-- **Science**: photosynthesis, gravity, atoms
-- **History**: Jose Rizal
+- **Science**: photosynthesis, gravity, atoms, evaporation, precipitation
+- **History**: Jose Rizal, Philippines capital
 - **English**: nouns, verbs
 
-Each topic includes definition, explanation, and example responses.
-
 #### 2. Question Type Detection
-The AI detects three types of questions and responds accordingly:
-- **Definition**: Triggered by phrases like "what is", "define", "meaning of"
-- **Explanation**: Triggered by "how", "why", "explain", "describe"
-- **Example**: Triggered by "example", "show me", "give me a sample"
+- **Definition**: triggered by "what is", "define", "meaning of"
+- **Explanation**: triggered by "how", "why", "explain", "describe"
+- **Example**: triggered by "example", "show me", "give me a sample"
+- **General**: default for other questions
 
 #### 3. Sentiment Analysis
-The AI detects user emotional state and adapts its response:
-- **Frustrated**: Detects words like "frustrated", "hate", "stupid" - responds with empathy
-- **Confused**: Detects "confused", "don't understand", "stuck" - offers clearer explanation
-- **Positive**: Detects "thanks", "great", "love" - acknowledges positivity
-- **Neutral**: Default response style
+- **Frustrated** ("frustrated", "frustrating", "hate", "stupid", "ugh") → empathetic prefix added
+- **Confused** ("confused", "don't understand", "lost", "stuck") → clearer explanation prefix added
+- **Positive** ("thanks", "great", "love", "helpful") → positive acknowledgment
+- **Neutral** → default response style
 
-#### 4. Subject Classification
-Messages are automatically classified into subjects (Math, Science, History, English, Filipino, General) based on keyword detection. This enables filtering and analytics.
+#### 4. Subject Auto-Classification
+Messages are automatically classified into subjects based on keyword detection. Enables filtering in chat and analytics in dashboard.
 
 #### 5. Math Expression Solver
-Can evaluate basic math expressions like "what is 5 + 3" and return numeric answers.
+Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 
 ## Frontend Features
 
 ### Chat Page (/)
-- Real-time AI conversation
-- Subject filter dropdown
-- Displays detected subject, question type, and sentiment for each AI response
+- AI conversation with typing indicator
+- **Subject filter dropdown** (All, Math, Science, History, English, Filipino, General)
+- Each AI response shows detected Subject, Question Type, and Sentiment
+- Auto-scroll to latest message
+- Conversation history loaded on page visit
 
 ### Profile Page (/profile)
-- Create user profiles with name, email, and preferred subjects
-- View all existing profiles
-- Edit and delete profiles
-- Multi-select subject preferences
+- Create user profiles with name, email, preferred subjects
+- View, edit, and delete existing profiles
+- Multi-select subject preference buttons
 
 ### Dashboard Page (/dashboard)
-- Total conversation count
-- Subject-wise breakdown
+- Total conversation count card
+- Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
-- Question type and sentiment indicators
+- Shows Question Type and Sentiment per conversation
 
 ## Project Structure
 
@@ -226,27 +253,27 @@ brainbytes-multi-container/
 ├── backend/
 │   ├── Dockerfile
 │   ├── package.json
-│   └── server.js
+│   ├── server.js          # Express server with all API endpoints
+│   └── aiService.js       # AI service module (Hugging Face and Enhancements)
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
 │   └── pages/
-│       ├── index.js          # Chat page
-│       ├── profile.js        # Profile management
-│       └── dashboard.js      # Activity dashboard
+│       ├── index.js       # Chat page with subject filter
+│       ├── profile.js     # User profile management
+│       └── dashboard.js   # Learning activity dashboard
 ├── docker-compose.yml
+├── .env                   # Hugging Face token (gitignored)
 ├── .gitignore
 └── README.md
 ```
 
-
-
 ## Team Members
 - Mara Julienne Rose Cervantes
-- Christine Joy Cortes
-- Sarah Nicole Hular
-- Michelle Joi Quesada
-- Eldan Eunice Sinsuan 
+- Christine Joy Cortes 
+- Sarah Nicole Hular 
+- Michelle Joi Quesada 
+- Eldan Eunice Sinsuan
 
 ## License
 This project is for educational purposes as part of the DevOps course.
