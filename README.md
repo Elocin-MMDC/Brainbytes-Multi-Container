@@ -130,8 +130,8 @@ What is the capital of the Philippines?
 **Request body:**
 ```json
 {
-  "name": "Juan Dela Cruz",
-  "email": "juan@example.com",
+  "name": "Sarah Nicole Hular",
+  "email": "sarah@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
