@@ -1,4 +1,4 @@
-# BrainBytes
+# BrainBytes - AI-Powered Learning Platform
 
 BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB, integrated with the Hugging Face Inference API.
 
@@ -54,6 +54,7 @@ docker-compose up --build
 docker-compose down
 ```
 
+<<<<<<< HEAD
 ## How to Use
 
 ### Getting Started
@@ -94,6 +95,33 @@ Define noun
 Explain verb
 What is the capital of the Philippines?
 ```
+=======
+## Testing the Application
+
+### Chat Page
+Try asking these questions to test different AI features:
+
+**Question Type Detection:**
+- `What is algebra?` → definition response
+- `Explain photosynthesis` → explanation response
+- `Give me an example of a noun` → example response
+
+**Sentiment Analysis:**
+- `I'm so frustrated!` → empathetic response
+- `I'm confused about gravity` → patient, clearer response
+- `Thank you, this is great!` → positive acknowledgment
+
+**Math Solver:**
+- `What is 5 + 3?` → returns "The answer is 8"
+- `What is 1+1?` → returns "The answer to 1+1 is 2"
+
+**Subject Detection:**
+- Questions about algebra, geometry → detected as Math
+- Questions about photosynthesis, gravity, atoms → detected as Science
+- Questions about Rizal, Philippines → detected as History
+- Questions about nouns, verbs → detected as English
+- Questions in Filipino/Tagalog → detected as Filipino
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 
 ## API Documentation
 
@@ -130,8 +158,8 @@ What is the capital of the Philippines?
 **Request body:**
 ```json
 {
-  "name": "Sarah Nicole Hular",
-  "email": "sarah@example.com",
+  "name": "Juan Dela Cruz",
+  "email": "juan@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
@@ -166,7 +194,11 @@ Stores all chat conversations with AI metadata.
 {
   text: String,           // user's question
   response: String,       // AI's answer
+<<<<<<< HEAD
   subject: String,        // detected/selected subject
+=======
+  subject: String,        // detected/selected subject (Math, Science, History, English, Filipino, General)
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
   questionType: String,   // definition | explanation | example | general
   sentiment: String,      // frustrated | confused | positive | neutral
   createdAt: Date
@@ -189,9 +221,15 @@ Stores user account information and learning preferences.
 Stores learning content organized by subject and topic.
 ```javascript
 {
+<<<<<<< HEAD
   subject: String,    // required
   topic: String,      // required
   content: String,    // required
+=======
+  subject: String,    // required (Math, Science, History, English, Filipino)
+  topic: String,      // required (specific topic name)
+  content: String,    // required (the learning content)
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
   createdAt: Date
 }
 ```
@@ -201,6 +239,7 @@ Stores learning content organized by subject and topic.
 ### Hybrid Approach (Hugging Face API + Intelligent Fallback)
 
 The AI uses a **hybrid approach** as recommended by the activity:
+<<<<<<< HEAD
 1. **Primary**: Calls Hugging Face Inference API (`facebook/bart-large-cnn`)
 2. **Fallback**: Uses local intelligent responses when API is unavailable or rate-limited
 
@@ -239,12 +278,54 @@ Auto-classifies messages into Math, Science, History, English, Filipino, or Gene
 
 #### 5. Math Expression Solver
 Evaluates expressions like "What is 5 + 3?" directly.
+=======
+
+1. **Primary**: Attempts to call the Hugging Face Inference API (`facebook/bart-large-cnn`) for AI-generated responses
+2. **Fallback**: When the API is unavailable, times out, or rate-limited, the system uses a local intelligent response system
+
+The AI logic is separated into `aiService.js` which exports:
+- `initializeAI()` - validates environment and token
+- `generateResponse(question)` - main hybrid logic
+- `detectQuestionType(question)` - detects definition/explanation/example/general
+- `detectSentiment(question)` - detects frustrated/confused/positive/neutral
+
+### Note on Node.js Compatibility
+The backend uses Node.js 14 (alpine). `AbortController` is not natively available in Node.js 14, so the API timeout is handled without it. The fallback system ensures the app always responds even when the API is unavailable.
+
+### AI Features
+
+#### 1. Expanded Knowledge Base
+Training data covers multiple subjects, each with three response types:
+- **Math**: algebra, geometry
+- **Science**: photosynthesis, gravity, atoms, evaporation, precipitation
+- **History**: Jose Rizal, Philippines capital
+- **English**: nouns, verbs
+
+#### 2. Question Type Detection
+- **Definition**: triggered by "what is", "define", "meaning of"
+- **Explanation**: triggered by "how", "why", "explain", "describe"
+- **Example**: triggered by "example", "show me", "give me a sample"
+- **General**: default for other questions
+
+#### 3. Sentiment Analysis
+- **Frustrated** ("frustrated", "frustrating", "hate", "stupid", "ugh") → empathetic prefix added
+- **Confused** ("confused", "don't understand", "lost", "stuck") → clearer explanation prefix added
+- **Positive** ("thanks", "great", "love", "helpful") → positive acknowledgment
+- **Neutral** → default response style
+
+#### 4. Subject Auto-Classification
+Messages are automatically classified into subjects based on keyword detection. Enables filtering in chat and analytics in dashboard.
+
+#### 5. Math Expression Solver
+Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 
 ## Frontend Features
 
 ### Chat Page (/)
 - AI conversation with typing indicator
 - **Subject filter dropdown** (All, Math, Science, History, English, Filipino, General)
+<<<<<<< HEAD
 - **Quick subject buttons** based on active user's preferred subjects
 - **Active user banner** showing name and preferred subjects
 - Each AI response shows Subject, Question Type, and Sentiment labels
@@ -263,6 +344,22 @@ Evaluates expressions like "What is 5 + 3?" directly.
 - Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
 - Question Type and Sentiment per conversation
+=======
+- Each AI response shows detected Subject, Question Type, and Sentiment
+- Auto-scroll to latest message
+- Conversation history loaded on page visit
+
+### Profile Page (/profile)
+- Create user profiles with name, email, preferred subjects
+- View, edit, and delete existing profiles
+- Multi-select subject preference buttons
+
+### Dashboard Page (/dashboard)
+- Total conversation count card
+- Per-subject conversation breakdown
+- Recent activity feed (last 10 conversations)
+- Shows Question Type and Sentiment per conversation
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 
 ## Project Structure
 
@@ -272,13 +369,22 @@ brainbytes-multi-container/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── server.js          # Express server with all API endpoints
+<<<<<<< HEAD
 │   └── aiService.js       # AI service (Hugging Face + fallback)
+=======
+│   └── aiService.js       # AI service module (Hugging Face and Enhancements)
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
 │   └── pages/
+<<<<<<< HEAD
 │       ├── index.js       # Chat page with subject filter + active user
 │       ├── profile.js     # Profile management with active user selection
+=======
+│       ├── index.js       # Chat page with subject filter
+│       ├── profile.js     # User profile management
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 │       └── dashboard.js   # Learning activity dashboard
 ├── docker-compose.yml
 ├── .env                   # Hugging Face token (gitignored)
@@ -286,12 +392,20 @@ brainbytes-multi-container/
 └── README.md
 ```
 
+<<<<<<< HEAD
 
 ## Team Members
 - Mara Julienne Rose Cervantes
 - Christine Joy Cortes
 - Sarah Nicole Hular
 - Michelle Joi Quesada
+=======
+## Team Members
+- Mara Julienne Rose Cervantes
+- Christine Joy Cortes
+- Sarah Nicole Hular
+- Michelle Joi Quesada
+>>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 - Eldan Eunice Sinsuan
 
 ## License

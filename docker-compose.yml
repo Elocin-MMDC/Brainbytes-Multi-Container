@@ -21,7 +21,7 @@ services:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - HUGGINGFACE_TOKEN=${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}
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
     depends_on:
       - mongo
     restart: unless-stopped

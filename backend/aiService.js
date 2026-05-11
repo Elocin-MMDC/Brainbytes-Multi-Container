@@ -28,7 +28,7 @@ function detectQuestionType(question) {
 }
 
 // ============================================
-// SENTIMENT ANALYSIS (NEW for homework)
+// SENTIMENT ANALYSIS
 // ============================================
 function detectSentiment(question) {
   const lower = question.toLowerCase();
