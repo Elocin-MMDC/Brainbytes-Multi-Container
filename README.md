@@ -121,7 +121,7 @@ Try asking these questions to test different AI features:
 - Questions about Rizal, Philippines → detected as History
 - Questions about nouns, verbs → detected as English
 - Questions in Filipino/Tagalog → detected as Filipino
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
+
 
 ## API Documentation
 
@@ -229,7 +229,6 @@ Stores learning content organized by subject and topic.
   subject: String,    // required (Math, Science, History, English, Filipino)
   topic: String,      // required (specific topic name)
   content: String,    // required (the learning content)
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
   createdAt: Date
 }
 ```
@@ -390,8 +389,6 @@ brainbytes-multi-container/
 ├── .gitignore
 └── README.md
 ```
-
-<<<<<<< HEAD
 
 ## Team Members
 - Mara Julienne Rose Cervantes
