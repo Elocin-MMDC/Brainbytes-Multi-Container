@@ -54,7 +54,7 @@ docker-compose up --build
 docker-compose down
 ```
 
-<<<<<<< HEAD
+
 ## How to Use
 
 ### Getting Started
@@ -95,7 +95,7 @@ Define noun
 Explain verb
 What is the capital of the Philippines?
 ```
-=======
+
 ## Testing the Application
 
 ### Chat Page
