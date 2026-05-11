@@ -318,7 +318,7 @@ Messages are automatically classified into subjects based on keyword detection. 
 
 #### 5. Math Expression Solver
 Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
+
 
 ## Frontend Features
 
@@ -373,7 +373,7 @@ brainbytes-multi-container/
 │   └── aiService.js       # AI service (Hugging Face + fallback)
 =======
 │   └── aiService.js       # AI service module (Hugging Face and Enhancements)
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
+
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
@@ -384,7 +384,6 @@ brainbytes-multi-container/
 =======
 │       ├── index.js       # Chat page with subject filter
 │       ├── profile.js     # User profile management
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 │       └── dashboard.js   # Learning activity dashboard
 ├── docker-compose.yml
 ├── .env                   # Hugging Face token (gitignored)
