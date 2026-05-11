@@ -8,6 +8,7 @@ The application consists of three Docker containers:
 - **Frontend** (Next.js) - User interface running on port 8080
 - **Backend** (Express.js) - REST API running on port 3000
 - **MongoDB** - Database running on port 27017
+- Initial architecture diagram: [View Diagram](<https://drive.google.com/file/d/1d3Y6QBUCd5a3VxOU8m44NdSBQ9p6MlWa/view?usp=sharing>)
 
 ## Prerequisites
 
@@ -318,7 +319,6 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 ### Chat Page (/)
 - AI conversation with typing indicator
 - **Subject filter dropdown** (All, Math, Science, History, English, Filipino, General)
-<<<<<<< HEAD
 - **Quick subject buttons** based on active user's preferred subjects
 - **Active user banner** showing name and preferred subjects
 - Each AI response shows Subject, Question Type, and Sentiment labels
@@ -337,7 +337,6 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
 - Question Type and Sentiment per conversation
-=======
 - Each AI response shows detected Subject, Question Type, and Sentiment
 - Auto-scroll to latest message
 - Conversation history loaded on page visit
