@@ -8,7 +8,7 @@ The application consists of three Docker containers:
 - **Frontend** (Next.js) - User interface running on port 8080
 - **Backend** (Express.js) - REST API running on port 3000
 - **MongoDB** - Database running on port 27017
-Initial architecture diagram: [View Diagram](<https://drive.google.com/file/d/1d3Y6QBUCd5a3VxOU8m44NdSBQ9p6MlWa/view?usp=sharing>)
+- Initial architecture diagram: [View Diagram](<https://drive.google.com/file/d/1d3Y6QBUCd5a3VxOU8m44NdSBQ9p6MlWa/view?usp=sharing>)
 
 ## Prerequisites
 
