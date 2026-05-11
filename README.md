@@ -368,21 +368,14 @@ brainbytes-multi-container/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── server.js          # Express server with all API endpoints
-<<<<<<< HEAD
 │   └── aiService.js       # AI service (Hugging Face + fallback)
-=======
-│   └── aiService.js       # AI service module (Hugging Face and Enhancements)
 
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
 │   └── pages/
-<<<<<<< HEAD
 │       ├── index.js       # Chat page with subject filter + active user
 │       ├── profile.js     # Profile management with active user selection
-=======
-│       ├── index.js       # Chat page with subject filter
-│       ├── profile.js     # User profile management
 │       └── dashboard.js   # Learning activity dashboard
 ├── docker-compose.yml
 ├── .env                   # Hugging Face token (gitignored)
