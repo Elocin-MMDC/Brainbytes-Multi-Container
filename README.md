@@ -194,11 +194,7 @@ Stores all chat conversations with AI metadata.
 {
   text: String,           // user's question
   response: String,       // AI's answer
-<<<<<<< HEAD
-  subject: String,        // detected/selected subject
-=======
   subject: String,        // detected/selected subject (Math, Science, History, English, Filipino, General)
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
   questionType: String,   // definition | explanation | example | general
   sentiment: String,      // frustrated | confused | positive | neutral
   createdAt: Date
@@ -221,11 +217,9 @@ Stores user account information and learning preferences.
 Stores learning content organized by subject and topic.
 ```javascript
 {
-<<<<<<< HEAD
   subject: String,    // required
   topic: String,      // required
   content: String,    // required
-=======
   subject: String,    // required (Math, Science, History, English, Filipino)
   topic: String,      // required (specific topic name)
   content: String,    // required (the learning content)
