@@ -319,7 +319,6 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 ### Chat Page (/)
 - AI conversation with typing indicator
 - **Subject filter dropdown** (All, Math, Science, History, English, Filipino, General)
-<<<<<<< HEAD
 - **Quick subject buttons** based on active user's preferred subjects
 - **Active user banner** showing name and preferred subjects
 - Each AI response shows Subject, Question Type, and Sentiment labels
@@ -338,7 +337,6 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
 - Question Type and Sentiment per conversation
-=======
 - Each AI response shows detected Subject, Question Type, and Sentiment
 - Auto-scroll to latest message
 - Conversation history loaded on page visit
