@@ -359,7 +359,7 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
 - Shows Question Type and Sentiment per conversation
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
+
 
 ## Project Structure
 
@@ -399,13 +399,6 @@ brainbytes-multi-container/
 - Christine Joy Cortes
 - Sarah Nicole Hular
 - Michelle Joi Quesada
-=======
-## Team Members
-- Mara Julienne Rose Cervantes
-- Christine Joy Cortes
-- Sarah Nicole Hular
-- Michelle Joi Quesada
->>>>>>> 830d2cc7022354da3c5c15a4766a1fcfe7e41924
 - Eldan Eunice Sinsuan
 
 ## License
