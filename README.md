@@ -8,8 +8,8 @@ BrainBytes is an AI-powered tutoring platform designed to provide accessible aca
 
 - **Eldan Eunice Sinsuan** - Team Lead [eldan.sinsuan@mmdc.mcl.edu.ph]
 - **Sarah Nicole Hular** - Frontend Developer [sarah.hular@mmdc.mcl.edu.ph]
-- **Mara Julienne Rose Cervantes** - Frontend Developer [mara.cervantes@mmdc.mcl.edu.ph]
-- **Christine Joy Cortes** - Backend Developer [christine.cortes@mmdc.mcl.edu.ph]
+- **Mara Julienne Rose Cervantes** -Frontend Developer [mara.cervantes@mmdc.mcl.edu.ph]
+- **Christine Joy Cortes** - Backend Developer[christine.cortes@mmdc.mcl.edu.ph]
 - **Michelle Joi Quesada** - DevOps Engineer [michelle.quesada@mmdc.mcl.edu.ph]
 
 ## Project Goals
@@ -27,7 +27,6 @@ BrainBytes is an AI-powered tutoring platform designed to provide accessible aca
 - **Database**: MongoDB
 - **AI Integration**: Hugging Face Inference API with intelligent fallback
 - **Containerization**: Docker & Docker Compose
-- **Architecture**: Multi-container setup with 3 services
 
 ## Architecture
 
@@ -124,6 +123,32 @@ Explain verb
 What is the capital of the Philippines?
 ```
 
+## Testing the Application
+
+### Chat Page
+Try asking these questions to test different AI features:
+
+**Question Type Detection:**
+- `What is algebra?` → definition response
+- `Explain photosynthesis` → explanation response
+- `Give me an example of a noun` → example response
+
+**Sentiment Analysis:**
+- `I'm so frustrated!` → empathetic response
+- `I'm confused about gravity` → patient, clearer response
+- `Thank you, this is great!` → positive acknowledgment
+
+**Math Solver:**
+- `What is 5 + 3?` → returns "The answer is 8"
+- `What is 1+1?` → returns "The answer to 1+1 is 2"
+
+**Subject Detection:**
+- Questions about algebra, geometry → detected as Math
+- Questions about photosynthesis, gravity, atoms → detected as Science
+- Questions about Rizal, Philippines → detected as History
+- Questions about nouns, verbs → detected as English
+- Questions in Filipino/Tagalog → detected as Filipino
+
 ## API Documentation
 
 ### AI Chat
@@ -159,8 +184,8 @@ What is the capital of the Philippines?
 **Request body:**
 ```json
 {
-  "name": "Sarah Nicole Hular",
-  "email": "sarah@example.com",
+  "name": "Juan Dela Cruz",
+  "email": "juan@example.com",
   "preferredSubjects": ["Math", "Science"]
 }
 ```
@@ -229,9 +254,9 @@ Stores learning content organized by subject and topic.
 
 ### Hybrid Approach (Hugging Face API + Intelligent Fallback)
 
-The AI uses a **hybrid approach**:
-1. **Primary**: Calls Hugging Face Inference API (`facebook/bart-large-cnn`) for AI-generated responses
-2. **Fallback**: Uses local intelligent responses when API is unavailable or rate-limited
+The AI uses a **hybrid approach** as recommended by the activity:
+1. **Primary**: Attempts to call the Hugging Face Inference API (`facebook/bart-large-cnn`) for AI-generated responses
+2. **Fallback**: When the API is unavailable, times out, or rate-limited, the system uses a local intelligent response system
 
 The AI logic is in `services/aiService.js` which exports:
 - `initializeAI()` - validates environment and token
@@ -240,7 +265,7 @@ The AI logic is in `services/aiService.js` which exports:
 - `detectSentiment(question)` - detects frustrated/confused/positive/neutral
 
 ### Note on Node.js Compatibility
-The backend uses Node.js 14. `AbortController` is not natively available in Node.js 14, so the API timeout handling was adjusted for compatibility. The fallback system ensures the app always responds.
+The backend uses Node.js 14 (alpine). `AbortController` is not natively available in Node.js 14, so the API timeout is handled without it. The fallback system ensures the app always responds even when the API is unavailable.
 
 ### AI Features
 
@@ -248,7 +273,7 @@ The backend uses Node.js 14. `AbortController` is not natively available in Node
 Each topic has three response variants (definition, explanation, example):
 - **Math**: algebra, geometry
 - **Science**: photosynthesis, gravity, atoms, evaporation, precipitation
-- **History**: Jose Rizal, Philippines
+- **History**: Jose Rizal, Philippines capital
 - **English**: nouns, verbs
 
 #### 2. Question Type Detection
@@ -258,13 +283,13 @@ Each topic has three response variants (definition, explanation, example):
 - **General**: default for other questions
 
 #### 3. Sentiment Analysis
-- **Frustrated** ("frustrated", "frustrating", "hate", "stupid", "ugh") → empathetic prefix
-- **Confused** ("confused", "don't understand", "lost", "stuck") → clearer explanation prefix
+- **Frustrated** ("frustrated", "frustrating", "hate", "stupid", "ugh") → empathetic prefix added
+- **Confused** ("confused", "don't understand", "lost", "stuck") → clearer explanation prefix added
 - **Positive** ("thanks", "great", "love", "helpful") → positive acknowledgment
 - **Neutral** → default response style
 
 #### 4. Subject Auto-Classification
-Auto-classifies messages into Math, Science, History, English, Filipino, or General for filtering and analytics.
+Messages are automatically classified into subjects based on keyword detection. Enables filtering in chat and analytics in dashboard.
 
 #### 5. Math Expression Solver
 Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
@@ -278,6 +303,8 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - **Active user banner** showing name and preferred subjects
 - Each AI response shows Subject, Question Type, and Sentiment labels
 - Personalized welcome message and username in chat
+- Auto-scroll to latest message
+- Conversation history loaded on page visit
 
 ### Profile Page (/profile)
 - Create profiles with name, email, and preferred subjects
@@ -288,10 +315,10 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - Active profile preferences sync to Chat page
 
 ### Dashboard Page (/dashboard)
-- Total conversation count
+- Total conversation count card
 - Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
-- Question Type and Sentiment per conversation
+- Shows Question Type and Sentiment per conversation
 
 ## Project Structure
 
@@ -299,33 +326,33 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 brainbytes-multi-container/
 ├── backend/
 │   ├── config/
-│   │   └── db.js              # MongoDB connection
+│   │   └── db.js                  # MongoDB connection
 │   ├── controllers/
-│   │   ├── materialController.js
-│   │   ├── messageController.js
-│   │   └── userController.js
+│   │   ├── materialController.js  # Learning material logic
+│   │   ├── messageController.js   # Message & AI chat logic
+│   │   └── userController.js      # User profile logic
 │   ├── models/
-│   │   ├── LearningMaterial.js
-│   │   ├── Message.js
-│   │   └── UserProfile.js
+│   │   ├── LearningMaterial.js    # Learning material schema
+│   │   ├── Message.js             # Message schema
+│   │   └── UserProfile.js         # User profile schema
 │   ├── routes/
-│   │   ├── materialRoutes.js
-│   │   ├── messageRoutes.js
-│   │   └── userRoutes.js
+│   │   ├── materialRoutes.js      # Material endpoints
+│   │   ├── messageRoutes.js       # Message & AI endpoints
+│   │   └── userRoutes.js          # User endpoints
 │   ├── services/
-│   │   └── aiService.js       # Hugging Face + fallback AI
+│   │   └── aiService.js           # Hugging Face + fallback AI
 │   ├── Dockerfile
 │   ├── package.json
-│   └── server.js              # Entry point
+│   └── server.js                  # Entry point
 ├── frontend/
 │   ├── pages/
-│   │   ├── index.js           # Chat page
-│   │   ├── profile.js         # Profile management
-│   │   └── dashboard.js       # Activity dashboard
+│   │   ├── index.js               # Chat page with subject filter + active user
+│   │   ├── profile.js             # Profile management with active user selection
+│   │   └── dashboard.js           # Learning activity dashboard
 │   ├── Dockerfile
 │   └── package.json
 ├── docker-compose.yml
-├── .env                       # Hugging Face token (gitignored)
+├── .env                           # Hugging Face token (gitignored)
 ├── .gitignore
 └── README.md
 ```
