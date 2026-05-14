@@ -1,6 +1,32 @@
-# BrainBytes - AI-Powered Learning Platform
+# BrainBytes AI Tutoring Platform
 
-BrainBytes is a multi-container learning application that provides AI-powered tutoring across multiple subjects. Built with Node.js, Next.js, and MongoDB, integrated with the Hugging Face Inference API.
+## Project Overview
+
+BrainBytes is an AI-powered tutoring platform designed to provide accessible academic assistance to Filipino students. This project implements the platform using modern DevOps practices and containerization. It provides intelligent tutoring across multiple subjects including Math, Science, History, English, and Filipino.
+
+## Team Members
+
+- **Eldan Eunice Sinsuan** - Team Lead [eldan.sinsuan@mmdc.mcl.edu.ph]
+- **Sarah Nicole Hular** - Frontend Developer [sarah.hular@mmdc.mcl.edu.ph]
+- **Mara Julienne Rose Cervantes** -Frontend Developer [mara.cervantes@mmdc.mcl.edu.ph]
+- **Christine Joy Cortes** - Backend Developer[christine.cortes@mmdc.mcl.edu.ph]
+- **Michelle Joi Quesada** - DevOps Engineer [michelle.quesada@mmdc.mcl.edu.ph]
+
+## Project Goals
+
+- Implement a containerized multi-container application with proper networking
+- Integrate AI-powered tutoring using Hugging Face Inference API
+- Create a database-driven application with MongoDB for storing user profiles, learning materials, and chat history
+- Apply MVC architecture for clean and maintainable backend code
+- Deploy using Docker Compose with frontend, backend, and database containers
+
+## Technology Stack
+
+- **Frontend**: Next.js (React)
+- **Backend**: Node.js with Express.js (MVC Architecture)
+- **Database**: MongoDB
+- **AI Integration**: Hugging Face Inference API with intelligent fallback
+- **Containerization**: Docker & Docker Compose
 
 ## Architecture
 
@@ -8,7 +34,8 @@ The application consists of three Docker containers:
 - **Frontend** (Next.js) - User interface running on port 8080
 - **Backend** (Express.js) - REST API running on port 3000
 - **MongoDB** - Database running on port 27017
-- Initial architecture diagram: [View Diagram](<https://drive.google.com/file/d/1d3Y6QBUCd5a3VxOU8m44NdSBQ9p6MlWa/view?usp=sharing>)
+
+Initial architecture diagram: [View Diagram](https://drive.google.com/file/d/1d3Y6QBUCd5a3VxOU8m44NdSBQ9p6MlWa/view?usp=sharing)
 
 ## Prerequisites
 
@@ -55,7 +82,6 @@ docker-compose up --build
 docker-compose down
 ```
 
-
 ## How to Use
 
 ### Getting Started
@@ -69,22 +95,22 @@ docker-compose down
 
 **Question Type Detection (same topic, different responses):**
 ```
-What is photosynthesis?       → definition
-Explain photosynthesis        → explanation
-Give me an example of photosynthesis → example
+What is photosynthesis?              → definition response
+Explain photosynthesis               → explanation response
+Give me an example of photosynthesis → example response
 ```
 
 **Sentiment Analysis:**
 ```
-I'm so frustrated!            → empathetic response
-I'm confused about gravity    → clearer explanation
-Thank you, this is great!     → positive acknowledgment
+I'm so frustrated!         → empathetic response
+I'm confused about gravity → clearer explanation
+Thank you, this is great!  → positive acknowledgment
 ```
 
 **Math Solver:**
 ```
-What is 5 + 3?                → The answer is 8
-What is 1+1?                  → The answer to 1+1 is 2
+What is 5 + 3?  → The answer is 8
+What is 1+1?    → The answer to 1+1 is 2
 ```
 
 **Other topics:**
@@ -122,7 +148,6 @@ Try asking these questions to test different AI features:
 - Questions about Rizal, Philippines → detected as History
 - Questions about nouns, verbs → detected as English
 - Questions in Filipino/Tagalog → detected as Filipino
-
 
 ## API Documentation
 
@@ -218,9 +243,6 @@ Stores user account information and learning preferences.
 Stores learning content organized by subject and topic.
 ```javascript
 {
-  subject: String,    // required
-  topic: String,      // required
-  content: String,    // required
   subject: String,    // required (Math, Science, History, English, Filipino)
   topic: String,      // required (specific topic name)
   content: String,    // required (the learning content)
@@ -233,51 +255,10 @@ Stores learning content organized by subject and topic.
 ### Hybrid Approach (Hugging Face API + Intelligent Fallback)
 
 The AI uses a **hybrid approach** as recommended by the activity:
-<<<<<<< HEAD
-1. **Primary**: Calls Hugging Face Inference API (`facebook/bart-large-cnn`)
-2. **Fallback**: Uses local intelligent responses when API is unavailable or rate-limited
-
-The AI logic is in `aiService.js` which exports:
-- `initializeAI()` - validates environment and token
-- `generateResponse(question)` - main hybrid logic
-- `detectQuestionType(question)` - detects definition/explanation/example/general
-- `detectSentiment(question)` - detects frustrated/confused/positive/neutral
-
-### Note on Node.js Compatibility
-The backend uses Node.js 14. `AbortController` is not natively available in Node.js 14, so the API timeout handling was adjusted for compatibility. The fallback system ensures the app always responds.
-
-### AI Features
-
-#### 1. Expanded Knowledge Base
-Each topic has three response variants (definition, explanation, example):
-- **Math**: algebra, geometry
-- **Science**: photosynthesis, gravity, atoms, evaporation, precipitation
-- **History**: Jose Rizal, Philippines
-- **English**: nouns, verbs
-
-#### 2. Question Type Detection
-- **Definition**: "what is", "define", "meaning of"
-- **Explanation**: "how", "why", "explain", "describe"
-- **Example**: "example", "show me", "give me a sample"
-- **General**: default
-
-#### 3. Sentiment Analysis
-- **Frustrated** ("frustrated", "frustrating", "hate", "stupid") → empathetic prefix
-- **Confused** ("confused", "don't understand", "lost", "stuck") → clearer explanation prefix
-- **Positive** ("thanks", "great", "love", "helpful") → positive acknowledgment
-- **Neutral** → default response
-
-#### 4. Subject Auto-Classification
-Auto-classifies messages into Math, Science, History, English, Filipino, or General for filtering and analytics.
-
-#### 5. Math Expression Solver
-Evaluates expressions like "What is 5 + 3?" directly.
-=======
-
 1. **Primary**: Attempts to call the Hugging Face Inference API (`facebook/bart-large-cnn`) for AI-generated responses
 2. **Fallback**: When the API is unavailable, times out, or rate-limited, the system uses a local intelligent response system
 
-The AI logic is separated into `aiService.js` which exports:
+The AI logic is in `services/aiService.js` which exports:
 - `initializeAI()` - validates environment and token
 - `generateResponse(question)` - main hybrid logic
 - `detectQuestionType(question)` - detects definition/explanation/example/general
@@ -289,7 +270,7 @@ The backend uses Node.js 14 (alpine). `AbortController` is not natively availabl
 ### AI Features
 
 #### 1. Expanded Knowledge Base
-Training data covers multiple subjects, each with three response types:
+Each topic has three response variants (definition, explanation, example):
 - **Math**: algebra, geometry
 - **Science**: photosynthesis, gravity, atoms, evaporation, precipitation
 - **History**: Jose Rizal, Philippines capital
@@ -313,7 +294,6 @@ Messages are automatically classified into subjects based on keyword detection. 
 #### 5. Math Expression Solver
 Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 
-
 ## Frontend Features
 
 ### Chat Page (/)
@@ -323,6 +303,8 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - **Active user banner** showing name and preferred subjects
 - Each AI response shows Subject, Question Type, and Sentiment labels
 - Personalized welcome message and username in chat
+- Auto-scroll to latest message
+- Conversation history loaded on page visit
 
 ### Profile Page (/profile)
 - Create profiles with name, email, and preferred subjects
@@ -333,55 +315,47 @@ Evaluates expressions like "What is 5 + 3?" and returns direct numeric answers.
 - Active profile preferences sync to Chat page
 
 ### Dashboard Page (/dashboard)
-- Total conversation count
-- Per-subject conversation breakdown
-- Recent activity feed (last 10 conversations)
-- Question Type and Sentiment per conversation
-- Each AI response shows detected Subject, Question Type, and Sentiment
-- Auto-scroll to latest message
-- Conversation history loaded on page visit
-
-### Profile Page (/profile)
-- Create user profiles with name, email, preferred subjects
-- View, edit, and delete existing profiles
-- Multi-select subject preference buttons
-
-### Dashboard Page (/dashboard)
 - Total conversation count card
 - Per-subject conversation breakdown
 - Recent activity feed (last 10 conversations)
 - Shows Question Type and Sentiment per conversation
-
 
 ## Project Structure
 
 ```
 brainbytes-multi-container/
 ├── backend/
+│   ├── config/
+│   │   └── db.js                  # MongoDB connection
+│   ├── controllers/
+│   │   ├── materialController.js  # Learning material logic
+│   │   ├── messageController.js   # Message & AI chat logic
+│   │   └── userController.js      # User profile logic
+│   ├── models/
+│   │   ├── LearningMaterial.js    # Learning material schema
+│   │   ├── Message.js             # Message schema
+│   │   └── UserProfile.js         # User profile schema
+│   ├── routes/
+│   │   ├── materialRoutes.js      # Material endpoints
+│   │   ├── messageRoutes.js       # Message & AI endpoints
+│   │   └── userRoutes.js          # User endpoints
+│   ├── services/
+│   │   └── aiService.js           # Hugging Face + fallback AI
 │   ├── Dockerfile
 │   ├── package.json
-│   ├── server.js          # Express server with all API endpoints
-│   └── aiService.js       # AI service (Hugging Face + fallback)
-
+│   └── server.js                  # Entry point
 ├── frontend/
+│   ├── pages/
+│   │   ├── index.js               # Chat page with subject filter + active user
+│   │   ├── profile.js             # Profile management with active user selection
+│   │   └── dashboard.js           # Learning activity dashboard
 │   ├── Dockerfile
-│   ├── package.json
-│   └── pages/
-│       ├── index.js       # Chat page with subject filter + active user
-│       ├── profile.js     # Profile management with active user selection
-│       └── dashboard.js   # Learning activity dashboard
+│   └── package.json
 ├── docker-compose.yml
-├── .env                   # Hugging Face token (gitignored)
+├── .env                           # Hugging Face token (gitignored)
 ├── .gitignore
 └── README.md
 ```
 
-## Team Members
-- Mara Julienne Rose Cervantes
-- Christine Joy Cortes
-- Sarah Nicole Hular
-- Michelle Joi Quesada
-- Eldan Eunice Sinsuan
-
 ## License
-This project is for educational purposes as part of the DevOps course.
+This project is for educational purposes as part of the DevOps course at MMDC.
