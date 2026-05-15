@@ -5,10 +5,23 @@ import { useEffect, useState } from 'react';
 export default function Dashboard() {
   const [data, setData] = useState({ recentMessages: [], totalMessages: 0, subjectCounts: [] });
   const [loading, setLoading] = useState(true);
+  const [activeUser, setActiveUser] = useState(null);
 
-  const fetchDashboard = async () => {
+  // Load active user from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('brainbytes_active_user');
+    if (saved) {
+      const user = JSON.parse(saved);
+      setActiveUser(user);
+    }
+  }, []);
+
+  const fetchDashboard = async (user) => {
     try {
-      const res = await axios.get('http://localhost:3000/api/dashboard/recent');
+      const url = user?._id
+        ? `http://localhost:3000/api/dashboard/recent?userId=${user._id}`
+        : 'http://localhost:3000/api/dashboard/recent';
+      const res = await axios.get(url);
       setData(res.data);
       setLoading(false);
     } catch (err) {
@@ -18,7 +31,14 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchDashboard();
+    const saved = localStorage.getItem('brainbytes_active_user');
+    if (saved) {
+      const user = JSON.parse(saved);
+      setActiveUser(user);
+      fetchDashboard(user);
+    } else {
+      fetchDashboard(null);
+    }
   }, []);
 
   return (
@@ -30,6 +50,34 @@ export default function Dashboard() {
       </nav>
 
       <h1 style={{ color: '#333' }}>Learning Activity Dashboard</h1>
+
+      {/* Active User Info */}
+      {activeUser && (
+        <div style={{
+          padding: '10px 15px',
+          backgroundColor: '#e8f5e9',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #a5d6a7'
+        }}>
+          <span style={{ fontWeight: 'bold', color: '#2e7d32' }}>👤 {activeUser.name}</span>
+          <span style={{ fontSize: '13px', color: '#555', marginLeft: '10px' }}>— Showing your personal learning activity</span>
+        </div>
+      )}
+
+      {!activeUser && (
+        <div style={{
+          padding: '10px 15px',
+          backgroundColor: '#fff3e0',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #ffcc80',
+          fontSize: '13px',
+          color: '#e65100'
+        }}>
+          💡 No active profile — showing all activity. <Link href="/profile"><a style={{ color: '#2196f3' }}>Set up your profile</a></Link> to see your personal dashboard!
+        </div>
+      )}
 
       {loading ? (
         <p>Loading...</p>

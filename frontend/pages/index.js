@@ -22,14 +22,16 @@ export default function Home() {
     }
   }, []);
 
-  // Fetch messages from the API
+  // Fetch messages filtered by userId
   const fetchMessages = async () => {
     try {
-      const url = selectedSubject !== 'All'
-        ? `http://localhost:3000/api/messages?subject=${selectedSubject}`
-        : 'http://localhost:3000/api/messages';
+      let url = 'http://localhost:3000/api/messages?';
+      if (selectedSubject !== 'All') url += `subject=${selectedSubject}&`;
+      if (activeUser?._id) url += `userId=${activeUser._id}`;
+
       const response = await axios.get(url);
-      setMessages(response.data);
+      const data = response.data;
+      setMessages(Array.isArray(data) ? data : data.messages || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -57,7 +59,9 @@ export default function Home() {
 
       const response = await axios.post('http://localhost:3000/api/ai/chat', {
         message: userMsg,
-        subject: selectedSubject
+        subject: selectedSubject,
+        userId: activeUser?._id || 'guest',
+        userName: activeUser?.name || 'Guest'
       });
 
       const aiMsg = {
@@ -87,9 +91,10 @@ export default function Home() {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Refetch messages when user or subject changes
   useEffect(() => {
     fetchMessages();
-  }, [selectedSubject]);
+  }, [selectedSubject, activeUser]);
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Nunito, sans-serif' }}>
@@ -154,7 +159,6 @@ export default function Home() {
           ))}
         </select>
 
-        {/* Quick subject buttons from user's preferred subjects */}
         {activeUser?.preferredSubjects?.length > 0 && (
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '12px', color: '#888', alignSelf: 'center' }}>Quick:</span>
@@ -207,7 +211,7 @@ export default function Home() {
                         }}>
                           <div>{message.text}</div>
                           <div style={{ fontSize: '12px', color: '#666', textAlign: 'right' }}>
-                            {activeUser ? activeUser.name : 'You'} • {new Date(message.createdAt).toLocaleTimeString()}
+                            {message.userName || (activeUser ? activeUser.name : 'You')} • {new Date(message.createdAt).toLocaleTimeString()}
                           </div>
                         </li>
                         <li style={{
