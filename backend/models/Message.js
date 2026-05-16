@@ -12,10 +12,10 @@ const messageSchema = new mongoose.Schema({
 });
 
 // Indexing: Optimize Query Performance
-messageSchema.index({ subject: 1, createdAt: -1 });
-messageSchema.index({ createdAt: -1 });
-messageSchema.index({ questionType: 1 });
-messageSchema.index({ sentiment: 1 });
-messageSchema.index({ userId: 1, createdAt: -1 });
+messageSchema.index({ subject: 1, createdAt: -1 }, { background: false });
+messageSchema.index({ createdAt: -1 }, { background: false });
+messageSchema.index({ questionType: 1 }, { background: false });
+messageSchema.index({ sentiment: 1 }, { background: false });
+messageSchema.index({ userId: 1, createdAt: -1 }, { background: false });
 
 module.exports = mongoose.model('Message', messageSchema);

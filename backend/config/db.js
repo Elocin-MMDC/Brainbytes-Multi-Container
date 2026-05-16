@@ -7,7 +7,8 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       retryWrites: true,
-      maxPoolSize: 10, // Maintain up to 10 socket connections
+      maxPoolSize: 10,
+      useFindAndModify: false  // Fix findOneAndUpdate deprecation
     });
     console.log('Connected to MongoDB');
   } catch (err) {
