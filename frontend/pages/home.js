@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
+import Navbar from '../Navbar';
 
 const TIPS = [
   "A 25-minute focused study burst followed by a 5-minute break (the Pomodoro Technique) is more effective than hours of distracted reading. Try one round before your next quiz!",
