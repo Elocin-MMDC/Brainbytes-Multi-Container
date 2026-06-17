@@ -16,8 +16,9 @@ export default function Dashboard() {
     const parsed = JSON.parse(userData);
     setUser(parsed);
 
-    const savedPhoto = localStorage.getItem('bb_photo');
-    const savedNote = localStorage.getItem('bb_note');
+    // Use same consistent key as profile.js: bb_photo_<id> and bb_note_<id>
+    const savedPhoto = localStorage.getItem(`bb_photo_${parsed.id}`);
+    const savedNote = localStorage.getItem(`bb_note_${parsed.id}`);
     if (savedPhoto) setPhoto(savedPhoto);
     if (savedNote) setNote(savedNote);
 
@@ -29,7 +30,6 @@ export default function Dashboard() {
       const res = await fetch(`http://localhost:3000/api/dashboard/recent?userId=${userId}`);
       const data = await res.json();
 
-      // Convert [{_id: 'Math', count: 2}] → {Math: 2}
       const bySubject = {};
       (data.subjectCounts || []).forEach(item => {
         if (item._id) bySubject[item._id] = item.count;
@@ -48,8 +48,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('bb_token');
     localStorage.removeItem('bb_user');
-    localStorage.removeItem('bb_photo');
-    localStorage.removeItem('bb_note');
+    // Note: intentionally keep bb_photo_<id> and bb_note_<id> so they persist after re-login
     router.push('/login');
   };
 

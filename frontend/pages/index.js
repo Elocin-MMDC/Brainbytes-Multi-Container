@@ -15,10 +15,7 @@ export default function Chat() {
   useEffect(() => {
     const token = localStorage.getItem('bb_token');
     const userData = localStorage.getItem('bb_user');
-    if (!token || !userData) {
-      router.push('/login');
-      return;
-    }
+    if (!token || !userData) { router.push('/login'); return; }
     const parsedUser = JSON.parse(userData);
     setUser(parsedUser);
     fetchMessages(parsedUser.id);
@@ -32,7 +29,21 @@ export default function Chat() {
     try {
       const res = await fetch(`http://localhost:3000/api/messages?userId=${userId}`);
       const data = await res.json();
-      if (Array.isArray(data.messages)) setMessages(data.messages);
+      if (Array.isArray(data.messages)) {
+        // Map DB messages — text = user question, response = AI answer
+        const mapped = [];
+        data.messages.slice().reverse().forEach((msg) => {
+          mapped.push({ text: msg.text, isUser: true });
+          mapped.push({
+            text: msg.response,
+            isUser: false,
+            subject: msg.subject,
+            questionType: msg.questionType,
+            sentiment: msg.sentiment,
+          });
+        });
+        setMessages(mapped);
+      }
     } catch (_) {}
   };
 
@@ -74,7 +85,7 @@ export default function Chat() {
   };
 
   const filteredMessages =
-    subject === 'All' ? messages : messages.filter((m) => m.subject === subject);
+    subject === 'All' ? messages : messages.filter((m) => m.subject === subject || m.isUser);
 
   if (!user) return null;
 
@@ -110,20 +121,24 @@ export default function Chat() {
             </div>
           )}
           {filteredMessages.map((msg, i) => (
-            <div key={i} style={msg.isUser ? s.userBubble : s.aiBubble}>
-              <p style={{ margin: 0 }}>{msg.text}</p>
-              {!msg.isUser && msg.subject && (
-                <div style={s.tags}>
-                  <span style={s.tag}>{msg.subject}</span>
-                  {msg.questionType && <span style={s.tag}>{msg.questionType}</span>}
-                  {msg.sentiment && <span style={s.tag}>{msg.sentiment}</span>}
-                </div>
-              )}
+            <div key={i} style={msg.isUser ? s.userRow : s.aiRow}>
+              <div style={msg.isUser ? s.userBubble : s.aiBubble}>
+                <p style={{ margin: 0 }}>{msg.text}</p>
+                {!msg.isUser && msg.subject && (
+                  <div style={s.tags}>
+                    <span style={s.tag}>{msg.subject}</span>
+                    {msg.questionType && <span style={s.tag}>{msg.questionType}</span>}
+                    {msg.sentiment && <span style={s.tag}>{msg.sentiment}</span>}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
           {loading && (
-            <div style={s.aiBubble}>
-              <p style={{ margin: 0, color: '#9ca3af' }}>Thinking...</p>
+            <div style={s.aiRow}>
+              <div style={s.aiBubble}>
+                <p style={{ margin: 0, color: '#9ca3af' }}>Thinking...</p>
+              </div>
             </div>
           )}
           <div ref={bottomRef} />
@@ -137,9 +152,7 @@ export default function Chat() {
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
             placeholder="Ask a question..."
           />
-          <button style={s.sendBtn} onClick={sendMessage} disabled={loading}>
-            Send
-          </button>
+          <button style={s.sendBtn} onClick={sendMessage} disabled={loading}>Send</button>
         </div>
       </div>
     </div>
@@ -160,8 +173,11 @@ const s = {
   select: { padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 },
   chatBox: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', minHeight: 420, maxHeight: 500, overflowY: 'auto', padding: 20, marginBottom: 16 },
   empty: { textAlign: 'center', paddingTop: 80, color: '#374151' },
-  userBubble: { backgroundColor: '#4f46e5', color: '#fff', borderRadius: '18px 18px 4px 18px', padding: '10px 16px', marginBottom: 12, marginLeft: 'auto', maxWidth: '70%' },
-  aiBubble: { backgroundColor: '#f3f4f6', color: '#111827', borderRadius: '18px 18px 18px 4px', padding: '10px 16px', marginBottom: 12, maxWidth: '75%' },
+  // FIX: wrapper rows control alignment
+  userRow: { display: 'flex', justifyContent: 'flex-end', marginBottom: 12 },
+  aiRow: { display: 'flex', justifyContent: 'flex-start', marginBottom: 12 },
+  userBubble: { backgroundColor: '#4f46e5', color: '#fff', borderRadius: '18px 18px 4px 18px', padding: '10px 16px', maxWidth: '70%' },
+  aiBubble: { backgroundColor: '#f3f4f6', color: '#111827', borderRadius: '18px 18px 18px 4px', padding: '10px 16px', maxWidth: '75%' },
   tags: { display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' },
   tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', borderRadius: 12, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
   inputRow: { display: 'flex', gap: 10 },

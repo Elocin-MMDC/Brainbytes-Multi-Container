@@ -24,7 +24,7 @@ export default function Profile() {
     setName(parsed.name || '');
     setSubjects(parsed.preferredSubjects || []);
 
-    // Load saved photo and note from localStorage (scoped to this user)
+    // Use consistent key: bb_photo_<id> and bb_note_<id>
     const savedPhoto = localStorage.getItem(`bb_photo_${parsed.id}`);
     const savedNote = localStorage.getItem(`bb_note_${parsed.id}`);
     if (savedPhoto) setPhoto(savedPhoto);
@@ -60,6 +60,8 @@ export default function Profile() {
   const handleLogout = () => {
     localStorage.removeItem('bb_token');
     localStorage.removeItem('bb_user');
+    // Note: we intentionally keep bb_photo_<id> and bb_note_<id>
+    // so they persist after re-login
     router.push('/login');
   };
 
@@ -67,7 +69,6 @@ export default function Profile() {
 
   return (
     <div style={s.page}>
-      {/* Navbar */}
       <nav style={s.nav}>
         <span style={s.navLogo}>🧠 BrainBytes</span>
         <div style={s.navLinks}>
@@ -83,7 +84,6 @@ export default function Profile() {
 
         {saved && <div style={s.successAlert}>✅ Profile saved successfully!</div>}
 
-        {/* Photo upload */}
         <div style={s.card}>
           <h3 style={s.cardTitle}>Profile Photo</h3>
           <div style={s.photoSection}>
@@ -107,7 +107,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Name */}
         <div style={s.card}>
           <h3 style={s.cardTitle}>Display Name</h3>
           <input
@@ -118,7 +117,6 @@ export default function Profile() {
           />
         </div>
 
-        {/* Preferred Subjects */}
         <div style={s.card}>
           <h3 style={s.cardTitle}>Preferred Subjects</h3>
           <div style={s.subjectGrid}>
@@ -134,7 +132,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Personal Notes */}
         <div style={s.card}>
           <h3 style={s.cardTitle}>📝 My Notes</h3>
           <p style={s.cardSubtitle}>This will appear on your Dashboard.</p>
@@ -147,7 +144,6 @@ export default function Profile() {
           />
         </div>
 
-        {/* Save button */}
         <button style={s.saveBtn} onClick={handleSave}>
           💾 Save Profile
         </button>
