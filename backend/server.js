@@ -1,35 +1,36 @@
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const aiService = require('./services/aiService');
+const { initializeAI } = require('./services/aiService');
 
-const messageRoutes = require('./routes/messageRoutes');
+// Routes
 const userRoutes = require('./routes/userRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const materialRoutes = require('./routes/materialRoutes');
+const authRoutes = require('./routes/authRoutes');
+
+// Connect to MongoDB
+connectDB();
+initializeAI();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-connectDB();
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api', messageRoutes);           // ← fixed: was /api/messages
+app.use('/api/materials', materialRoutes);
 
-// Initialize AI service
-aiService.initializeAI();
-
-// Routes
+// Health check
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the BrainBytes API' });
+  res.json({ message: 'BrainBytes API is running' });
 });
 
-app.use('/api', messageRoutes);
-app.use('/api', userRoutes);
-app.use('/api', materialRoutes);
-
-// Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('Server running on port ' + PORT);
+  console.log(`Server running on port ${PORT}`);
 });

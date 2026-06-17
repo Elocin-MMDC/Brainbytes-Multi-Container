@@ -4,6 +4,8 @@ services:
     build: ./frontend
     ports:
       - "8080:3000"
+    environment: 
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:3000
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
@@ -21,6 +23,12 @@ services:
       - /usr/src/app/node_modules
     environment:
       - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - BACKEND_URL=${BACKEND_URL}
     depends_on:
       - mongo
     restart: unless-stopped

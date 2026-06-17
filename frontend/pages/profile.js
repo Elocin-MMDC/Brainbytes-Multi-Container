@@ -1,256 +1,184 @@
-import axios from 'axios';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useEffect, useRef, useState } from 'react';
+
+const SUBJECTS = ['Math', 'Science', 'History', 'English', 'Filipino'];
 
 export default function Profile() {
-  const [users, setUsers] = useState([]);
+  const router = useRouter();
+  const fileRef = useRef(null);
+
+  const [user, setUser] = useState(null);
+  const [photo, setPhoto] = useState(null);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [preferredSubjects, setPreferredSubjects] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [message, setMessage] = useState('');
-  const [activeUser, setActiveUser] = useState(null);
+  const [subjects, setSubjects] = useState([]);
+  const [note, setNote] = useState('');
+  const [saved, setSaved] = useState(false);
 
-  const subjectOptions = ['Math', 'Science', 'History', 'English', 'Filipino'];
-
-  const fetchUsers = async () => {
-    try {
-      const res = await axios.get('http://localhost:3000/api/users');
-      setUsers(res.data);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-    }
-  };
-
-  // Load active user from localStorage on mount
   useEffect(() => {
-    fetchUsers();
-    const saved = localStorage.getItem('brainbytes_active_user');
-    if (saved) setActiveUser(JSON.parse(saved));
+    const token = localStorage.getItem('bb_token');
+    const userData = localStorage.getItem('bb_user');
+    if (!token || !userData) { router.push('/login'); return; }
+
+    const parsed = JSON.parse(userData);
+    setUser(parsed);
+    setName(parsed.name || '');
+    setSubjects(parsed.preferredSubjects || []);
+
+    // Load saved photo and note from localStorage (scoped to this user)
+    const savedPhoto = localStorage.getItem(`bb_photo_${parsed.id}`);
+    const savedNote = localStorage.getItem(`bb_note_${parsed.id}`);
+    if (savedPhoto) setPhoto(savedPhoto);
+    if (savedNote) setNote(savedNote);
   }, []);
 
-  const toggleSubject = (sub) => {
-    if (preferredSubjects.includes(sub)) {
-      setPreferredSubjects(preferredSubjects.filter(s => s !== sub));
-    } else {
-      setPreferredSubjects([...preferredSubjects, sub]);
-    }
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhoto(reader.result);
+      localStorage.setItem(`bb_photo_${user.id}`, reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingId) {
-        const res = await axios.put('http://localhost:3000/api/users/' + editingId, {
-          name, email, preferredSubjects
-        });
-        // Update active user if editing the active one
-        if (activeUser && activeUser._id === editingId) {
-          localStorage.setItem('brainbytes_active_user', JSON.stringify(res.data));
-          setActiveUser(res.data);
-        }
-        setMessage('Profile updated successfully!');
-      } else {
-        await axios.post('http://localhost:3000/api/users', { name, email, preferredSubjects });
-        setMessage('Profile created successfully!');
-      }
-      setName(''); setEmail(''); setPreferredSubjects([]); setEditingId(null);
-      fetchUsers();
-    } catch (err) {
-      setMessage('Error: ' + (err.response?.data?.error || err.message));
-    }
+  const toggleSubject = (subject) => {
+    setSubjects((prev) =>
+      prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject]
+    );
   };
 
-  const handleEdit = (user) => {
-    setName(user.name); setEmail(user.email);
-    setPreferredSubjects(user.preferredSubjects || []);
-    setEditingId(user._id); setMessage('');
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this profile?')) return;
-    try {
-      await axios.delete('http://localhost:3000/api/users/' + id);
-      if (activeUser && activeUser._id === id) {
-        localStorage.removeItem('brainbytes_active_user');
-        setActiveUser(null);
-      }
-      setMessage('Profile deleted');
-      fetchUsers();
-    } catch (err) {
-      setMessage('Error deleting: ' + err.message);
-    }
-  };
-
-  // Set active user - this connects to chat page
-  const handleSetActive = (user) => {
-    localStorage.setItem('brainbytes_active_user', JSON.stringify(user));
-    setActiveUser(user);
-    setMessage('Active user set to ' + user.name + '! Your preferred subjects will be applied in the chat.');
+  const handleSave = () => {
+    const updated = { ...user, name, preferredSubjects: subjects };
+    localStorage.setItem('bb_user', JSON.stringify(updated));
+    localStorage.setItem(`bb_note_${user.id}`, note);
+    setUser(updated);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('brainbytes_active_user');
-    setActiveUser(null);
-    setMessage('Logged out successfully.');
+    localStorage.removeItem('bb_token');
+    localStorage.removeItem('bb_user');
+    router.push('/login');
   };
 
-  const handleCancel = () => {
-    setName(''); setEmail(''); setPreferredSubjects([]); setEditingId(null); setMessage('');
-  };
+  if (!user) return null;
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Nunito, sans-serif' }}>
-      <nav style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '2px solid #2196f3', paddingBottom: '10px' }}>
-        <Link href="/"><a style={{ color: '#666', textDecoration: 'none' }}>Chat</a></Link>
-        <Link href="/profile"><a style={{ color: '#2196f3', textDecoration: 'none', fontWeight: 'bold' }}>Profile</a></Link>
-        <Link href="/dashboard"><a style={{ color: '#666', textDecoration: 'none' }}>Dashboard</a></Link>
+    <div style={s.page}>
+      {/* Navbar */}
+      <nav style={s.nav}>
+        <span style={s.navLogo}>🧠 BrainBytes</span>
+        <div style={s.navLinks}>
+          <span style={s.navLink} onClick={() => router.push('/')}>Chat</span>
+          <span style={{ ...s.navLink, color: '#4f46e5', fontWeight: 700 }}>Profile</span>
+          <span style={s.navLink} onClick={() => router.push('/dashboard')}>Dashboard</span>
+          <button style={s.logoutBtn} onClick={handleLogout}>Logout</button>
+        </div>
       </nav>
 
-      <h1 style={{ color: '#333' }}>User Profile</h1>
+      <div style={s.container}>
+        <h2 style={s.pageTitle}>My Profile</h2>
 
-      {/* Active User Banner */}
-      {activeUser && (
-        <div style={{
-          padding: '15px 20px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '10px',
-          marginBottom: '20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          border: '2px solid #2196f3'
-        }}>
-          <div>
-            <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#1565c0' }}>
-              👤 Active User: {activeUser.name}
+        {saved && <div style={s.successAlert}>✅ Profile saved successfully!</div>}
+
+        {/* Photo upload */}
+        <div style={s.card}>
+          <h3 style={s.cardTitle}>Profile Photo</h3>
+          <div style={s.photoSection}>
+            <div style={s.avatarWrapper} onClick={() => fileRef.current.click()}>
+              {photo
+                ? <img src={photo} alt="profile" style={s.avatar} />
+                : <div style={s.avatarPlaceholder}>
+                    <span style={{ fontSize: 40 }}>👤</span>
+                    <p style={{ margin: '8px 0 0', fontSize: 13, color: '#9ca3af' }}>Click to upload</p>
+                  </div>
+              }
             </div>
-            <div style={{ fontSize: '13px', color: '#666', marginTop: '3px' }}>
-              Preferred subjects: {activeUser.preferredSubjects?.join(', ') || 'None set'}
-            </div>
-            <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
-              These subjects will be available as filters in the Chat page
+            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
+            <div style={s.photoInfo}>
+              <p style={{ margin: 0, color: '#374151', fontWeight: 600 }}>{name}</p>
+              <p style={{ margin: '4px 0 12px', color: '#9ca3af', fontSize: 13 }}>{user.email}</p>
+              <button style={s.uploadBtn} onClick={() => fileRef.current.click()}>
+                📷 Change Photo
+              </button>
             </div>
           </div>
-          <button onClick={handleLogout} style={{
-            padding: '8px 16px', backgroundColor: '#ef5350',
-            color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'
-          }}>Logout</button>
-        </div>
-      )}
-
-      {message && (
-        <div style={{
-          padding: '10px',
-          backgroundColor: message.includes('Error') ? '#fee' : '#efe',
-          borderRadius: '5px', marginBottom: '15px',
-          color: message.includes('Error') ? '#c00' : '#060'
-        }}>
-          {message}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} style={{
-        backgroundColor: '#f9f9f9', padding: '20px',
-        borderRadius: '12px', marginBottom: '30px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <h3>{editingId ? 'Edit Profile' : 'Create New Profile'}</h3>
-
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Name:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required
-            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }} />
         </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Email:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }} />
+        {/* Name */}
+        <div style={s.card}>
+          <h3 style={s.cardTitle}>Display Name</h3>
+          <input
+            style={s.input}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+          />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Preferred Subjects:</label>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {subjectOptions.map(sub => (
-              <label key={sub} style={{
-                padding: '6px 12px',
-                backgroundColor: preferredSubjects.includes(sub) ? '#2196f3' : '#fff',
-                color: preferredSubjects.includes(sub) ? 'white' : '#333',
-                border: '1px solid #ddd', borderRadius: '20px', cursor: 'pointer'
-              }}>
-                <input type="checkbox" checked={preferredSubjects.includes(sub)}
-                  onChange={() => toggleSubject(sub)} style={{ display: 'none' }} />
-                {sub}
-              </label>
+        {/* Preferred Subjects */}
+        <div style={s.card}>
+          <h3 style={s.cardTitle}>Preferred Subjects</h3>
+          <div style={s.subjectGrid}>
+            {SUBJECTS.map((subject) => (
+              <button
+                key={subject}
+                onClick={() => toggleSubject(subject)}
+                style={subjects.includes(subject) ? s.subjectActive : s.subjectInactive}
+              >
+                {subject}
+              </button>
             ))}
           </div>
         </div>
 
-        <button type="submit" style={{
-          padding: '10px 24px', backgroundColor: '#2196f3', color: 'white',
-          border: 'none', borderRadius: '5px', cursor: 'pointer',
-          fontWeight: 'bold', marginRight: '10px'
-        }}>
-          {editingId ? 'Update' : 'Create'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={handleCancel} style={{
-            padding: '10px 24px', backgroundColor: '#999', color: 'white',
-            border: 'none', borderRadius: '5px', cursor: 'pointer'
-          }}>Cancel</button>
-        )}
-      </form>
-
-      <h3>Existing Profiles ({users.length})</h3>
-      <p style={{ fontSize: '13px', color: '#666', marginBottom: '15px' }}>
-        💡 Click <strong>"Use this profile"</strong> to set your active user. Your preferred subjects will appear as quick filters in the Chat page!
-      </p>
-
-      {users.length === 0 ? (
-        <p style={{ color: '#999' }}>No profiles yet. Create your first one!</p>
-      ) : (
-        <div>
-          {users.map(user => (
-            <div key={user._id} style={{
-              padding: '15px', border: activeUser?._id === user._id ? '2px solid #2196f3' : '1px solid #ddd',
-              borderRadius: '8px', marginBottom: '10px',
-              backgroundColor: activeUser?._id === user._id ? '#e3f2fd' : '#fff'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '18px' }}>
-                    {activeUser?._id === user._id && '✅ '}{user.name}
-                  </div>
-                  <div style={{ color: '#666', fontSize: '14px' }}>{user.email}</div>
-                  <div style={{ marginTop: '8px' }}>
-                    <strong>Preferred Subjects:</strong> {user.preferredSubjects?.join(', ') || 'None'}
-                  </div>
-                </div>
-              </div>
-              <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {activeUser?._id !== user._id ? (
-                  <button onClick={() => handleSetActive(user)} style={{
-                    padding: '6px 14px', backgroundColor: '#4caf50', color: 'white',
-                    border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold'
-                  }}>Use this profile</button>
-                ) : (
-                  <span style={{ padding: '6px 14px', backgroundColor: '#e8f5e9', color: '#2e7d32',
-                    borderRadius: '5px', fontSize: '13px', fontWeight: 'bold' }}>Currently Active</span>
-                )}
-                <button onClick={() => handleEdit(user)} style={{
-                  padding: '6px 14px', backgroundColor: '#2196f3', color: 'white',
-                  border: 'none', borderRadius: '5px', cursor: 'pointer'
-                }}>Edit</button>
-                <button onClick={() => handleDelete(user._id)} style={{
-                  padding: '6px 14px', backgroundColor: '#dc3545', color: 'white',
-                  border: 'none', borderRadius: '5px', cursor: 'pointer'
-                }}>Delete</button>
-              </div>
-            </div>
-          ))}
+        {/* Personal Notes */}
+        <div style={s.card}>
+          <h3 style={s.cardTitle}>📝 My Notes</h3>
+          <p style={s.cardSubtitle}>This will appear on your Dashboard.</p>
+          <textarea
+            style={s.textarea}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Write your personal notes, reminders, or study goals here..."
+            rows={5}
+          />
         </div>
-      )}
+
+        {/* Save button */}
+        <button style={s.saveBtn} onClick={handleSave}>
+          💾 Save Profile
+        </button>
+      </div>
     </div>
   );
 }
+
+const s = {
+  page: { minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'Arial, sans-serif' },
+  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 32px', backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb' },
+  navLogo: { fontWeight: 700, fontSize: 20, color: '#4f46e5' },
+  navLinks: { display: 'flex', alignItems: 'center', gap: 24 },
+  navLink: { cursor: 'pointer', fontSize: 14, color: '#374151' },
+  logoutBtn: { padding: '8px 18px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 },
+  container: { maxWidth: 680, margin: '0 auto', padding: '32px 16px' },
+  pageTitle: { fontSize: 26, fontWeight: 700, color: '#111827', marginBottom: 24 },
+  successAlert: { backgroundColor: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 14 },
+  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '24px', marginBottom: 20 },
+  cardTitle: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#111827' },
+  cardSubtitle: { margin: '-10px 0 12px', fontSize: 13, color: '#9ca3af' },
+  photoSection: { display: 'flex', alignItems: 'center', gap: 24 },
+  avatarWrapper: { cursor: 'pointer', flexShrink: 0 },
+  avatar: { width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid #4f46e5' },
+  avatarPlaceholder: { width: 100, height: 100, borderRadius: '50%', backgroundColor: '#f3f4f6', border: '2px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
+  photoInfo: { flex: 1 },
+  uploadBtn: { padding: '8px 16px', backgroundColor: '#ede9fe', color: '#4f46e5', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13 },
+  input: { width: '100%', padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' },
+  subjectGrid: { display: 'flex', gap: 10, flexWrap: 'wrap' },
+  subjectActive: { padding: '8px 18px', border: '2px solid #4f46e5', backgroundColor: '#4f46e5', color: '#fff', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 600 },
+  subjectInactive: { padding: '8px 18px', border: '2px solid #d1d5db', backgroundColor: '#fff', color: '#374151', borderRadius: 20, cursor: 'pointer', fontSize: 13 },
+  textarea: { width: '100%', padding: '12px 14px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'Arial, sans-serif', lineHeight: 1.6 },
+  saveBtn: { width: '100%', padding: '14px', backgroundColor: '#4f46e5', color: '#fff', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer' },
+};

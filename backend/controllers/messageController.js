@@ -17,12 +17,10 @@ const getMessages = async (req, res) => {
   try {
     const { subject, userId } = req.query;
 
-    // Pagination
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    // Filter by subject and userId
     const filter = {};
     if (subject && subject !== 'All') filter.subject = subject;
     if (userId) filter.userId = userId;
@@ -36,12 +34,7 @@ const getMessages = async (req, res) => {
 
     res.json({
       messages,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
+      pagination: { total, page, limit, pages: Math.ceil(total / limit) }
     });
   } catch (err) {
     console.error('Error retrieving messages:', err);
@@ -54,7 +47,6 @@ const aiChat = async (req, res) => {
   try {
     const { message, subject, userId, userName } = req.body;
 
-    // Input Validation
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
@@ -74,10 +66,10 @@ const aiChat = async (req, res) => {
       .catch(error => {
         console.error('AI response timed out or failed:', error.message);
         return {
+          aiResponse: "I'm sorry, I couldn't process your request in time. Please try again.",
           subject: 'General',
           questionType: 'general',
           sentiment: 'neutral',
-          response: "I am sorry, but I could not process your request in time. Please try again with a simpler question."
         };
       });
 
@@ -85,7 +77,7 @@ const aiChat = async (req, res) => {
 
     const saved = new Message({
       text: message,
-      response: aiResult.response,
+      response: aiResult.aiResponse,   // ← fixed
       subject: finalSubject,
       questionType: aiResult.questionType,
       sentiment: aiResult.sentiment,
@@ -96,7 +88,7 @@ const aiChat = async (req, res) => {
 
     res.json({
       userMessage: message,
-      aiResponse: aiResult.response,
+      aiResponse: aiResult.aiResponse,  // ← fixed
       subject: finalSubject,
       questionType: aiResult.questionType,
       sentiment: aiResult.sentiment
@@ -119,6 +111,7 @@ const getDashboard = async (req, res) => {
       { $match: filter },
       { $group: { _id: '$subject', count: { $sum: 1 } } }
     ]);
+
     res.json({ recentMessages, totalMessages, subjectCounts });
   } catch (err) {
     console.error('Error retrieving dashboard:', err);

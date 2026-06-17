@@ -1,302 +1,170 @@
-import axios from 'axios';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 
-export default function Home() {
+const SUBJECTS = ['All', 'Math', 'Science', 'History', 'English', 'Filipino', 'General'];
+
+export default function Chat() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [isTyping, setIsTyping] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState('All');
-  const [activeUser, setActiveUser] = useState(null);
-  const messageEndRef = useRef(null);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subject, setSubject] = useState('All');
+  const bottomRef = useRef(null);
 
-  const subjects = ['All', 'Math', 'Science', 'History', 'English', 'Filipino', 'General'];
-
-  // Load active user from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('brainbytes_active_user');
-    if (saved) {
-      const user = JSON.parse(saved);
-      setActiveUser(user);
+    const token = localStorage.getItem('bb_token');
+    const userData = localStorage.getItem('bb_user');
+    if (!token || !userData) {
+      router.push('/login');
+      return;
     }
+    const parsedUser = JSON.parse(userData);
+    setUser(parsedUser);
+    fetchMessages(parsedUser.id);
   }, []);
 
-  // Fetch messages filtered by userId
-  const fetchMessages = async () => {
-    try {
-      let url = 'http://localhost:3000/api/messages?';
-      if (selectedSubject !== 'All') url += `subject=${selectedSubject}&`;
-      if (activeUser?._id) url += `userId=${activeUser._id}`;
-
-      const response = await axios.get(url);
-      const data = response.data;
-      setMessages(Array.isArray(data) ? data : data.messages || []);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      setLoading(false);
-    }
-  };
-
-  // Submit a new message
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    try {
-      setIsTyping(true);
-      const userMsg = newMessage;
-      setNewMessage('');
-
-      const tempUserMsg = {
-        _id: Date.now().toString(),
-        text: userMsg,
-        isUser: true,
-        createdAt: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, tempUserMsg]);
-
-      const response = await axios.post('http://localhost:3000/api/ai/chat', {
-        message: userMsg,
-        subject: selectedSubject,
-        userId: activeUser?._id || 'guest',
-        userName: activeUser?.name || 'Guest'
-      });
-
-      const aiMsg = {
-        _id: Date.now().toString() + '_ai',
-        text: response.data.aiResponse,
-        isUser: false,
-        subject: response.data.subject,
-        questionType: response.data.questionType,
-        sentiment: response.data.sentiment,
-        createdAt: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, aiMsg]);
-    } catch (error) {
-      console.error('Error posting message:', error);
-      setMessages(prev => [...prev, {
-        _id: Date.now().toString(),
-        text: "Sorry, I couldn't process your request. Please try again later.",
-        isUser: false,
-        createdAt: new Date().toISOString()
-      }]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Refetch messages when user or subject changes
-  useEffect(() => {
-    fetchMessages();
-  }, [selectedSubject, activeUser]);
+  const fetchMessages = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/messages?userId=${userId}`);
+      const data = await res.json();
+      if (Array.isArray(data.messages)) setMessages(data.messages);
+    } catch (_) {}
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const userMsg = input.trim();
+    setInput('');
+    setLoading(true);
+    setMessages((prev) => [...prev, { text: userMsg, isUser: true }]);
+
+    try {
+      const res = await fetch('http://localhost:3000/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg, subject, userId: user.id, userName: user.name }),
+      });
+      const data = await res.json();
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: data.aiResponse,
+          isUser: false,
+          subject: data.subject,
+          questionType: data.questionType,
+          sentiment: data.sentiment,
+        },
+      ]);
+    } catch (_) {
+      setMessages((prev) => [...prev, { text: 'Error connecting to server.', isUser: false }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('bb_token');
+    localStorage.removeItem('bb_user');
+    router.push('/login');
+  };
+
+  const filteredMessages =
+    subject === 'All' ? messages : messages.filter((m) => m.subject === subject);
+
+  if (!user) return null;
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Nunito, sans-serif' }}>
-      <nav style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '2px solid #2196f3', paddingBottom: '10px' }}>
-        <Link href="/"><a style={{ color: '#2196f3', textDecoration: 'none', fontWeight: 'bold' }}>Chat</a></Link>
-        <Link href="/profile"><a style={{ color: '#666', textDecoration: 'none' }}>Profile</a></Link>
-        <Link href="/dashboard"><a style={{ color: '#666', textDecoration: 'none' }}>Dashboard</a></Link>
+    <div style={s.page}>
+      <nav style={s.nav}>
+        <span style={s.navLogo}>🧠 BrainBytes</span>
+        <div style={s.navLinks}>
+          <span style={{ ...s.navLink, color: '#4f46e5', fontWeight: 700 }}>Chat</span>
+          <span style={s.navLink} onClick={() => router.push('/profile')}>Profile</span>
+          <span style={s.navLink} onClick={() => router.push('/dashboard')}>Dashboard</span>
+          <button style={s.logoutBtn} onClick={handleLogout}>Logout</button>
+        </div>
       </nav>
 
-      {/* Active User Banner */}
-      {activeUser && (
-        <div style={{
-          padding: '10px 15px',
-          backgroundColor: '#e8f5e9',
-          borderRadius: '8px',
-          marginBottom: '15px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          border: '1px solid #a5d6a7'
-        }}>
-          <div>
-            <span style={{ fontWeight: 'bold', color: '#2e7d32' }}>👤 {activeUser.name}</span>
-            {activeUser.preferredSubjects?.length > 0 && (
-              <span style={{ fontSize: '13px', color: '#555', marginLeft: '10px' }}>
-                Preferred: {activeUser.preferredSubjects.join(', ')}
-              </span>
-            )}
-          </div>
-          <Link href="/profile">
-            <a style={{ fontSize: '12px', color: '#2196f3', textDecoration: 'none' }}>Switch Profile</a>
-          </Link>
+      <div style={s.container}>
+        <div style={s.banner}>
+          👋 Welcome back, <strong>{user.name}</strong>!
         </div>
-      )}
 
-      {!activeUser && (
-        <div style={{
-          padding: '10px 15px',
-          backgroundColor: '#fff3e0',
-          borderRadius: '8px',
-          marginBottom: '15px',
-          border: '1px solid #ffcc80',
-          fontSize: '13px',
-          color: '#e65100'
-        }}>
-          💡 No active profile. <Link href="/profile"><a style={{ color: '#2196f3' }}>Set up your profile</a></Link> to personalize your learning experience!
+        <div style={s.filterRow}>
+          <label style={s.filterLabel}>Filter by Subject:</label>
+          <select style={s.select} value={subject} onChange={(e) => setSubject(e.target.value)}>
+            {SUBJECTS.map((sub) => <option key={sub}>{sub}</option>)}
+          </select>
         </div>
-      )}
 
-      <h1 style={{ textAlign: 'center', color: '#333' }}>BrainBytes AI Tutor</h1>
-
-      {/* Subject Filter */}
-      <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-        <label style={{ fontWeight: 'bold' }}>Filter by Subject:</label>
-        <select
-          value={selectedSubject}
-          onChange={(e) => setSelectedSubject(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}
-        >
-          {subjects.map(sub => (
-            <option key={sub} value={sub}>{sub}</option>
+        <div style={s.chatBox}>
+          {filteredMessages.length === 0 && (
+            <div style={s.empty}>
+              <p style={{ fontWeight: 700, fontSize: 18 }}>Welcome to BrainBytes AI Tutor!</p>
+              <p style={{ color: '#6b7280' }}>Ask me anything about Math, Science, History, English, or Filipino.</p>
+            </div>
+          )}
+          {filteredMessages.map((msg, i) => (
+            <div key={i} style={msg.isUser ? s.userBubble : s.aiBubble}>
+              <p style={{ margin: 0 }}>{msg.text}</p>
+              {!msg.isUser && msg.subject && (
+                <div style={s.tags}>
+                  <span style={s.tag}>{msg.subject}</span>
+                  {msg.questionType && <span style={s.tag}>{msg.questionType}</span>}
+                  {msg.sentiment && <span style={s.tag}>{msg.sentiment}</span>}
+                </div>
+              )}
+            </div>
           ))}
-        </select>
+          {loading && (
+            <div style={s.aiBubble}>
+              <p style={{ margin: 0, color: '#9ca3af' }}>Thinking...</p>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
 
-        {activeUser?.preferredSubjects?.length > 0 && (
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: '#888', alignSelf: 'center' }}>Quick:</span>
-            {activeUser.preferredSubjects.map(sub => (
-              <button key={sub} onClick={() => setSelectedSubject(sub)} style={{
-                padding: '4px 10px',
-                backgroundColor: selectedSubject === sub ? '#2196f3' : '#e3f2fd',
-                color: selectedSubject === sub ? 'white' : '#2196f3',
-                border: '1px solid #2196f3',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}>{sub}</button>
-            ))}
-          </div>
-        )}
+        <div style={s.inputRow}>
+          <input
+            style={s.input}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            placeholder="Ask a question..."
+          />
+          <button style={s.sendBtn} onClick={sendMessage} disabled={loading}>
+            Send
+          </button>
+        </div>
       </div>
-
-      <div style={{
-        border: '1px solid #ddd', borderRadius: '12px',
-        height: '500px', overflowY: 'auto', padding: '16px',
-        marginBottom: '20px', backgroundColor: '#f9f9f9',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <p>Loading conversation history...</p>
-          </div>
-        ) : (
-          <div>
-            {messages.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                <h3>Welcome{activeUser ? ', ' + activeUser.name : ''} to BrainBytes AI Tutor!</h3>
-                <p>Ask me any question about math, science, history, English, or Filipino.</p>
-                <p style={{ fontSize: '13px', color: '#666' }}>Try: "What is algebra?", "Explain photosynthesis", or "Give me an example of a noun"</p>
-              </div>
-            ) : (
-              <ul style={{ listStyleType: 'none', padding: 0 }}>
-                {messages.map((message) => {
-                  const isUser = message.isUser !== undefined ? message.isUser : !message.response;
-                  if (message.text && message.response) {
-                    return (
-                      <div key={message._id}>
-                        <li style={{
-                          padding: '12px 16px', margin: '8px 0',
-                          backgroundColor: '#e3f2fd', color: '#333',
-                          borderRadius: '12px', maxWidth: '80%',
-                          marginLeft: 'auto', marginRight: '0',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                        }}>
-                          <div>{message.text}</div>
-                          <div style={{ fontSize: '12px', color: '#666', textAlign: 'right' }}>
-                            {message.userName || (activeUser ? activeUser.name : 'You')} • {new Date(message.createdAt).toLocaleTimeString()}
-                          </div>
-                        </li>
-                        <li style={{
-                          padding: '12px 16px', margin: '8px 0',
-                          backgroundColor: '#e8f5e9', color: '#333',
-                          borderRadius: '12px', maxWidth: '80%',
-                          marginLeft: '0', marginRight: 'auto',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                        }}>
-                          <div>{message.response}</div>
-                          <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
-                            Subject: {message.subject} | Type: {message.questionType} | Sentiment: {message.sentiment}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#666' }}>
-                            AI Tutor • {new Date(message.createdAt).toLocaleTimeString()}
-                          </div>
-                        </li>
-                      </div>
-                    );
-                  }
-                  return (
-                    <li key={message._id} style={{
-                      padding: '12px 16px', margin: '8px 0',
-                      backgroundColor: isUser ? '#e3f2fd' : '#e8f5e9',
-                      color: '#333', borderRadius: '12px',
-                      maxWidth: '80%', wordBreak: 'break-word',
-                      marginLeft: isUser ? 'auto' : '0',
-                      marginRight: isUser ? '0' : 'auto',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                    }}>
-                      <div style={{ lineHeight: '1.5' }}>{message.text}</div>
-                      {!isUser && message.subject && (
-                        <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
-                          Subject: {message.subject} | Type: {message.questionType} | Sentiment: {message.sentiment}
-                        </div>
-                      )}
-                      <div style={{ fontSize: '12px', color: '#666', textAlign: isUser ? 'right' : 'left' }}>
-                        {isUser ? (activeUser ? activeUser.name : 'You') : 'AI Tutor'} • {new Date(message.createdAt).toLocaleTimeString()}
-                      </div>
-                    </li>
-                  );
-                })}
-                {isTyping && (
-                  <li style={{
-                    padding: '12px 16px', margin: '8px 0',
-                    backgroundColor: '#e8f5e9', color: '#333',
-                    borderRadius: '12px', maxWidth: '80%',
-                    marginLeft: '0', marginRight: 'auto',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                  }}>
-                    <div>AI tutor is typing...</div>
-                  </li>
-                )}
-                <div ref={messageEndRef} />
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex' }}>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Ask a question..."
-          style={{
-            flex: '1', padding: '14px 16px',
-            borderRadius: '12px 0 0 12px', border: '1px solid #ddd',
-            fontSize: '16px', outline: 'none'
-          }}
-          disabled={isTyping}
-        />
-        <button type="submit" style={{
-          padding: '14px 24px',
-          backgroundColor: isTyping ? '#90caf9' : '#2196f3',
-          color: 'white', border: 'none',
-          borderRadius: '0 12px 12px 0', fontSize: '16px',
-          cursor: isTyping ? 'not-allowed' : 'pointer'
-        }}
-          disabled={isTyping}
-        >
-          {isTyping ? 'Sending...' : 'Send'}
-        </button>
-      </form>
     </div>
   );
 }
+
+const s = {
+  page: { minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'Arial, sans-serif' },
+  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 32px', backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb' },
+  navLogo: { fontWeight: 700, fontSize: 20, color: '#4f46e5' },
+  navLinks: { display: 'flex', alignItems: 'center', gap: 24 },
+  navLink: { cursor: 'pointer', fontSize: 14, color: '#374151' },
+  logoutBtn: { padding: '8px 18px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 },
+  container: { maxWidth: 800, margin: '0 auto', padding: '24px 16px' },
+  banner: { backgroundColor: '#ede9fe', borderRadius: 10, padding: '12px 20px', marginBottom: 16, color: '#4f46e5', fontSize: 15 },
+  filterRow: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 },
+  filterLabel: { fontWeight: 600, fontSize: 14, color: '#374151' },
+  select: { padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 },
+  chatBox: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', minHeight: 420, maxHeight: 500, overflowY: 'auto', padding: 20, marginBottom: 16 },
+  empty: { textAlign: 'center', paddingTop: 80, color: '#374151' },
+  userBubble: { backgroundColor: '#4f46e5', color: '#fff', borderRadius: '18px 18px 4px 18px', padding: '10px 16px', marginBottom: 12, marginLeft: 'auto', maxWidth: '70%' },
+  aiBubble: { backgroundColor: '#f3f4f6', color: '#111827', borderRadius: '18px 18px 18px 4px', padding: '10px 16px', marginBottom: 12, maxWidth: '75%' },
+  tags: { display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' },
+  tag: { backgroundColor: '#e0e7ff', color: '#4f46e5', borderRadius: 12, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
+  inputRow: { display: 'flex', gap: 10 },
+  input: { flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid #d1d5db', fontSize: 15, outline: 'none' },
+  sendBtn: { padding: '12px 24px', backgroundColor: '#4f46e5', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: 15 },
+};

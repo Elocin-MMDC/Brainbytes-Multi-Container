@@ -1,145 +1,180 @@
-import axios from 'axios';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
-  const [data, setData] = useState({ recentMessages: [], totalMessages: 0, subjectCounts: [] });
-  const [loading, setLoading] = useState(true);
-  const [activeUser, setActiveUser] = useState(null);
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [photo, setPhoto] = useState(null);
+  const [note, setNote] = useState('');
+  const [stats, setStats] = useState({ total: 0, bySubject: {}, recent: [] });
 
-  // Load active user from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('brainbytes_active_user');
-    if (saved) {
-      const user = JSON.parse(saved);
-      setActiveUser(user);
-    }
+    const token = localStorage.getItem('bb_token');
+    const userData = localStorage.getItem('bb_user');
+    if (!token || !userData) { router.push('/login'); return; }
+
+    const parsed = JSON.parse(userData);
+    setUser(parsed);
+
+    const savedPhoto = localStorage.getItem('bb_photo');
+    const savedNote = localStorage.getItem('bb_note');
+    if (savedPhoto) setPhoto(savedPhoto);
+    if (savedNote) setNote(savedNote);
+
+    fetchStats(parsed.id);
   }, []);
 
-  const fetchDashboard = async (user) => {
+  const fetchStats = async (userId) => {
     try {
-      const url = user?._id
-        ? `http://localhost:3000/api/dashboard/recent?userId=${user._id}`
-        : 'http://localhost:3000/api/dashboard/recent';
-      const res = await axios.get(url);
-      setData(res.data);
-      setLoading(false);
+      const res = await fetch(`http://localhost:3000/api/dashboard/recent?userId=${userId}`);
+      const data = await res.json();
+
+      // Convert [{_id: 'Math', count: 2}] → {Math: 2}
+      const bySubject = {};
+      (data.subjectCounts || []).forEach(item => {
+        if (item._id) bySubject[item._id] = item.count;
+      });
+
+      setStats({
+        total: data.totalMessages || 0,
+        bySubject,
+        recent: data.recentMessages || [],
+      });
     } catch (err) {
-      console.error('Error fetching dashboard:', err);
-      setLoading(false);
+      console.error('Dashboard fetch error:', err);
     }
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem('brainbytes_active_user');
-    if (saved) {
-      const user = JSON.parse(saved);
-      setActiveUser(user);
-      fetchDashboard(user);
-    } else {
-      fetchDashboard(null);
-    }
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('bb_token');
+    localStorage.removeItem('bb_user');
+    localStorage.removeItem('bb_photo');
+    localStorage.removeItem('bb_note');
+    router.push('/login');
+  };
+
+  if (!user) return null;
+
+  const subjectColors = {
+    Math: '#4f46e5', Science: '#059669', History: '#d97706',
+    English: '#db2777', Filipino: '#7c3aed', General: '#6b7280',
+  };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Nunito, sans-serif' }}>
-      <nav style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '2px solid #2196f3', paddingBottom: '10px' }}>
-        <Link href="/"><a style={{ color: '#666', textDecoration: 'none' }}>Chat</a></Link>
-        <Link href="/profile"><a style={{ color: '#666', textDecoration: 'none' }}>Profile</a></Link>
-        <Link href="/dashboard"><a style={{ color: '#2196f3', textDecoration: 'none', fontWeight: 'bold' }}>Dashboard</a></Link>
+    <div style={s.page}>
+      <nav style={s.nav}>
+        <span style={s.navLogo}>🧠 BrainBytes</span>
+        <div style={s.navLinks}>
+          <span style={s.navLink} onClick={() => router.push('/')}>Chat</span>
+          <span style={s.navLink} onClick={() => router.push('/profile')}>Profile</span>
+          <span style={{ ...s.navLink, color: '#4f46e5', fontWeight: 700 }}>Dashboard</span>
+          <button style={s.logoutBtn} onClick={handleLogout}>Logout</button>
+        </div>
       </nav>
 
-      <h1 style={{ color: '#333' }}>Learning Activity Dashboard</h1>
-
-      {/* Active User Info */}
-      {activeUser && (
-        <div style={{
-          padding: '10px 15px',
-          backgroundColor: '#e8f5e9',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          border: '1px solid #a5d6a7'
-        }}>
-          <span style={{ fontWeight: 'bold', color: '#2e7d32' }}>👤 {activeUser.name}</span>
-          <span style={{ fontSize: '13px', color: '#555', marginLeft: '10px' }}>— Showing your personal learning activity</span>
-        </div>
-      )}
-
-      {!activeUser && (
-        <div style={{
-          padding: '10px 15px',
-          backgroundColor: '#fff3e0',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          border: '1px solid #ffcc80',
-          fontSize: '13px',
-          color: '#e65100'
-        }}>
-          💡 No active profile — showing all activity. <Link href="/profile"><a style={{ color: '#2196f3' }}>Set up your profile</a></Link> to see your personal dashboard!
-        </div>
-      )}
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', flexWrap: 'wrap' }}>
-            <div style={{
-              flex: 1, minWidth: '200px', padding: '20px',
-              backgroundColor: '#2196f3', color: 'white',
-              borderRadius: '12px', textAlign: 'center',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ fontSize: '14px', opacity: 0.9 }}>Total Conversations</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold' }}>{data.totalMessages}</div>
+      <div style={s.container}>
+        <div style={s.headerCard}>
+          <div style={s.userInfo}>
+            {photo
+              ? <img src={photo} alt="profile" style={s.avatar} />
+              : <div style={s.avatarPlaceholder}>👤</div>
+            }
+            <div>
+              <h2 style={{ margin: 0, fontSize: 22, color: '#111827' }}>
+                Welcome, {user.name}! 👋
+              </h2>
+              <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 14 }}>{user.email}</p>
+              {user.preferredSubjects?.length > 0 && (
+                <div style={s.subjectTags}>
+                  {user.preferredSubjects.map((sub) => (
+                    <span key={sub} style={{ ...s.subjectTag, backgroundColor: subjectColors[sub] || '#6b7280' }}>
+                      {sub}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            {data.subjectCounts.map(sc => (
-              <div key={sc._id} style={{
-                flex: 1, minWidth: '150px', padding: '20px',
-                backgroundColor: '#fff', border: '2px solid #2196f3',
-                borderRadius: '12px', textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '14px', color: '#666' }}>{sc._id}</div>
-                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#2196f3' }}>{sc.count}</div>
-              </div>
-            ))}
+          </div>
+        </div>
+
+        <div style={s.statsRow}>
+          <div style={s.statCard}>
+            <p style={s.statNumber}>{stats.total}</p>
+            <p style={s.statLabel}>Total Conversations</p>
+          </div>
+          {Object.entries(stats.bySubject).slice(0, 3).map(([subject, count]) => (
+            <div key={subject} style={{ ...s.statCard, borderTop: `4px solid ${subjectColors[subject] || '#6b7280'}` }}>
+              <p style={s.statNumber}>{count}</p>
+              <p style={s.statLabel}>{subject}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={s.twoCol}>
+          <div style={s.card}>
+            <h3 style={s.cardTitle}>📝 My Notes</h3>
+            {note
+              ? <div style={s.noteContent}>
+                  {note.split('\n').map((line, i) => (
+                    <p key={i} style={{ margin: '0 0 8px', lineHeight: 1.6 }}>{line || <br />}</p>
+                  ))}
+                </div>
+              : <div style={s.emptyNote}>
+                  <p style={{ color: '#9ca3af', fontSize: 14, margin: 0 }}>
+                    No notes yet. Go to{' '}
+                    <span style={{ color: '#4f46e5', cursor: 'pointer' }} onClick={() => router.push('/profile')}>
+                      Profile
+                    </span>{' '}
+                    to add your notes!
+                  </p>
+                </div>
+            }
           </div>
 
-          <h2>Recent Learning Activity</h2>
-          {data.recentMessages.length === 0 ? (
-            <p style={{ color: '#999' }}>No activity yet. Start chatting to see your learning history!</p>
-          ) : (
-            <div>
-              {data.recentMessages.map(msg => (
-                <div key={msg._id} style={{
-                  padding: '15px', marginBottom: '10px',
-                  border: '1px solid #ddd', borderRadius: '12px',
-                  backgroundColor: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{
-                      padding: '3px 10px', backgroundColor: '#2196f3',
-                      color: 'white', borderRadius: '12px', fontSize: '12px'
-                    }}>{msg.subject || 'General'}</span>
-                    <span style={{ fontSize: '12px', color: '#999' }}>
-                      {new Date(msg.createdAt).toLocaleString()}
+          <div style={s.card}>
+            <h3 style={s.cardTitle}>🕐 Recent Activity</h3>
+            {stats.recent.length === 0
+              ? <p style={{ color: '#9ca3af', fontSize: 14 }}>No conversations yet. Start chatting!</p>
+              : stats.recent.slice(0, 5).map((msg, i) => (
+                  <div key={i} style={s.activityItem}>
+                    <span style={{ ...s.subjectBadge, backgroundColor: subjectColors[msg.subject] || '#6b7280' }}>
+                      {msg.subject || 'General'}
                     </span>
+                    <p style={s.activityText}>{msg.text?.slice(0, 60)}...</p>
                   </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Q:</strong> {msg.text}
-                  </div>
-                  <div style={{ color: '#444' }}>
-                    <strong>A:</strong> {msg.response}
-                  </div>
-                  <div style={{ fontSize: '11px', marginTop: '8px', color: '#888' }}>
-                    Type: {msg.questionType || 'general'} | Sentiment: {msg.sentiment || 'neutral'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                ))
+            }
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+const s = {
+  page: { minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'Arial, sans-serif' },
+  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 32px', backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb' },
+  navLogo: { fontWeight: 700, fontSize: 20, color: '#4f46e5' },
+  navLinks: { display: 'flex', alignItems: 'center', gap: 24 },
+  navLink: { cursor: 'pointer', fontSize: 14, color: '#374151' },
+  logoutBtn: { padding: '8px 18px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 },
+  container: { maxWidth: 900, margin: '0 auto', padding: '32px 16px' },
+  headerCard: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24, marginBottom: 20 },
+  userInfo: { display: 'flex', alignItems: 'center', gap: 20 },
+  avatar: { width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid #4f46e5' },
+  avatarPlaceholder: { width: 72, height: 72, borderRadius: '50%', backgroundColor: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 },
+  subjectTags: { display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' },
+  subjectTag: { color: '#fff', borderRadius: 12, padding: '2px 10px', fontSize: 12, fontWeight: 600 },
+  statsRow: { display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' },
+  statCard: { flex: 1, minWidth: 140, backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', borderTop: '4px solid #4f46e5', padding: '20px 24px', textAlign: 'center' },
+  statNumber: { margin: 0, fontSize: 32, fontWeight: 800, color: '#111827' },
+  statLabel: { margin: '4px 0 0', fontSize: 13, color: '#6b7280' },
+  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
+  card: { backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 24 },
+  cardTitle: { margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#111827' },
+  noteContent: { backgroundColor: '#fafafa', borderRadius: 8, padding: '14px 16px', border: '1px solid #f3f4f6', color: '#374151', fontSize: 14 },
+  emptyNote: { backgroundColor: '#fafafa', borderRadius: 8, padding: '20px 16px', border: '1px dashed #d1d5db', textAlign: 'center' },
+  activityItem: { display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
+  subjectBadge: { color: '#fff', borderRadius: 8, padding: '2px 8px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', marginTop: 2 },
+  activityText: { margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.5 },
+};
