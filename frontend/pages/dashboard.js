@@ -23,7 +23,7 @@ export default function Dashboard() {
 
   const fetchStats = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/dashboard/recent?userId=${userId}`);
+      const res = await fetch(`https://backend-production-ed95.up.railway.app/api/dashboard/recent?userId=${userId}`);
       const data = await res.json();
       const bySubject = {};
       (data.subjectCounts || []).forEach(item => {

@@ -20,7 +20,7 @@ export default function VerifyEmail() {
 
     const verify = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/auth/verify/${token}`);
+        const res = await fetch(`https://backend-production-ed95.up.railway.app/api/auth/verify/${token}`);
         const data = await res.json();
 
         if (res.ok) {
